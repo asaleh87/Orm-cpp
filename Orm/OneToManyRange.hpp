@@ -2,11 +2,6 @@
 
 #include "OrmWithRefToFather.hpp"
 
-template<class E>
-const E& extractRealType(const E& e) { return e; }
-
-template<class E, class Father, class Id>
-const E& extractRealType(const OrmWithRefToFather<Father, E, Id>& e) { return e.m_orm; }
 
 template<class Range, class Accessor>
 struct OneToManyRange {

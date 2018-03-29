@@ -8,16 +8,18 @@ struct OneToMany {
 	static std::tuple<> relations() { return std::make_tuple(); }
 };
 
-template<class Accessor>
+template<class Accessor, class Writer>
 struct OneToManyRelation {
 	using accessor_t = Accessor;
+	using writer_t = Writer;
 	std::string m_refColumn;
 	Accessor m_accessor;
-	OneToManyRelation(std::string refColumn, Accessor accessor)
-		: m_refColumn(std::move(refColumn)), m_accessor(accessor) {}
+	Writer m_writer;
+	OneToManyRelation(std::string refColumn, Accessor accessor, Writer writer)
+		: m_refColumn(std::move(refColumn)), m_accessor(accessor), m_writer(writer) {}
 };
 
-template<class Accessor>
-OneToManyRelation<Accessor> createOneToManyRelation(std::string refColumn, Accessor accessor) {
-	return OneToManyRelation<Accessor>(refColumn, accessor);
+template<class Accessor, class Writer>
+OneToManyRelation<Accessor, Writer> createOneToManyRelation(std::string refColumn, Accessor accessor, Writer writer) {
+	return OneToManyRelation<Accessor, Writer>(refColumn, accessor, writer);
 }
