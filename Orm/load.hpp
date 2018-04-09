@@ -4,13 +4,6 @@
 #include "OneToMany.hpp"
 #include "Query.hpp"
 
-template<class RefToFather, class Range>
-auto makeFatherIdQuery(const Range& range) {
-	Query<RefToFather> query;
-	static const int father_ref_index = Datamodel<RefToFather>::father_ref_index;
-	query.withCriteria<father_ref_index>(range);
-	return query;
-}
 template<class Orm, class Relation, class Range, class DBHandler>
 void loadChild(const Relation& relation, Range& father_ids, DBHandler handler)
 {

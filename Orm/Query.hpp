@@ -69,3 +69,12 @@ private:
 		return initialize_impl<Orm>(Datamodel<Orm>::columns(), std::make_index_sequence<std::tuple_size<decltype(Datamodel<Orm>::columns())>::value>());
 	}
 };
+
+
+template<class RefToFather, class Range>
+auto makeFatherIdQuery(const Range& range) {
+	Query<RefToFather> query;
+	static const int father_ref_index = Datamodel<RefToFather>::father_ref_index;
+	query.withCriteria<father_ref_index>(range);
+	return query;
+}

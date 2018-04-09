@@ -35,6 +35,16 @@ struct OrmWithRefToFather {
 		bool operator()(const OrmWithRefToFather& lhs, const OrmWithRefToFather& rhs) const { return lhs.m_ref_to_father < rhs.m_ref_to_father; }
 	};
 };
+template<class T>
+struct orm_undl_type {
+	using type = T;
+};
+template<class F, class Son, class Id>
+struct orm_undl_type<OrmWithRefToFather<F, Son, Id>> {
+	using type = Son;
+};
+template<class T>
+using orm_undl_type_t = typename orm_undl_type<T>::type;
 
 template<class Father, class Child, class Id>
 auto make_orm_with_ref_to_father(Child& child, Id id, const Father&)
