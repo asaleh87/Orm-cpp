@@ -32,12 +32,12 @@ void saveChildren(const Range& range_with_ids, DBStream stream, IdGenerator gen)
 }
 template<class Range, class IdGenerator, class DBStream>
 void save_impl(const Range& range, DBStream stream, IdGenerator gen) {
-	auto ids = gen(range);
+	auto ids = gen(make_cref(range));
 	stream(zip(ids, range));
-	saveChildren(zip(ids, range), stream, gen);
+	saveChildren(zip(ids, make_cref(range)), stream, gen);
 }
 template<class Range, class IdGenerator, class DBStream>
 void save(const Range& range, DBStream stream, IdGenerator gen) {
-	return save_impl(make_cref(range), stream, gen);
+	return save_impl(range, stream, gen);
 }
 
