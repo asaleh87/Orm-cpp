@@ -11,7 +11,7 @@ bool eraseChild(const Relation& relation, Range& father_ids, DBHandler handler)
 	using Accessor = typename Relation::accessor_t;
 	using container_type = std::decay_t<std::result_of_t<Accessor(Orm)>>;
 	using child_type = typename container_type::value_type;
-	using child_type_with_father_ref = OrmWithRefToFather<Orm, child_type>;
+	using child_type_with_father_ref = OrmWithRefToFather<Orm, child_type, typename Range::value_type>;
 	
 	return erase(makeFatherIdQuery<child_type_with_father_ref>(father_ids), handler);
 }

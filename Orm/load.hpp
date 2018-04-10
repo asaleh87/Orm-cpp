@@ -10,7 +10,7 @@ void loadChild(const Relation& relation, Range& father_ids, DBHandler handler)
 	using Accessor = typename Relation::accessor_t;
 	using container_type = typename std::decay_t<std::result_of_t<Accessor(Orm)>>;
 	using child_type = typename container_type::value_type;
-	using child_type_with_father_ref = OrmWithRefToFather<Orm, child_type>;
+	using child_type_with_father_ref = OrmWithRefToFather<Orm, child_type, typename Range::value_type::first_type>;
 	auto childRange = loadElements(makeFatherIdQuery<child_type_with_father_ref>(father_ids | make_transform([](const auto& e) { return e.first; })), handler);
 
 	std::sort(childRange.begin(), childRange.end(), typename child_type_with_father_ref::Compare());
