@@ -7,7 +7,7 @@ template<class Range, class Accessor>
 struct OneToManyRange {
 	using root_iterator = typename Range::const_iterator;
 	using root_type = typename root_iterator::value_type::second_type::type;
-	using child_iterator = typename std::decay<typename std::result_of<Accessor(root_type)>::type>::type::const_iterator;
+	using child_iterator = typename std::decay_t<std::result_of_t<Accessor(root_type)>>::const_iterator;
 	using value_type = OrmWithRefToFather<typename std::decay<root_type>::type, typename child_iterator::value_type, typename root_iterator::value_type::first_type>;
 
 	struct const_iterator : public std::iterator<std::input_iterator_tag, value_type>

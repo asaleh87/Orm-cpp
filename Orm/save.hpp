@@ -10,9 +10,7 @@ template<class Relation, class Range, class IdGenerator, class DBStream>
 void saveChild(const Relation& relation, const Range& range_with_ids, IdGenerator gen, DBStream stream)
 {
 	auto childRange = makeOneToManyRange(range_with_ids, relation.m_accessor);
-	std::vector<int> ids = gen(make_cref(childRange));
-	stream(zip(ids, childRange));
-	saveChildren(zip(ids, make_cref(childRange)), stream, gen);
+	save(childRange, stream, gen);
 }
 
 template<size_t I, class Range, class IdGenerator, class DBStream, class... Relations>
@@ -29,6 +27,17 @@ typename std::enable_if < I < sizeof...(Relations), void>::type
 
 template<class Range, class IdGenerator, class DBStream>
 void saveChildren(const Range& range_with_ids, DBStream stream, IdGenerator gen) {
-	using root_type = typename std::remove_const<typename Range::value_type::second_type::type>::type;
-	saveChildren_impl<0>(OneToMany<root_type>::relations(), range_with_ids, gen, stream);
+	using undl_element_type = std::decay_t<typename Range::value_type::second_type::type>;
+	saveChildren_impl<0>(OneToMany<undl_element_type >::relations(), range_with_ids, gen, stream);
 }
+template<class Range, class IdGenerator, class DBStream>
+void save_impl(const Range& range, DBStream stream, IdGenerator gen) {
+	auto ids = gen(range);
+	stream(zip(ids, range));
+	saveChildren(zip(ids, range), stream, gen);
+}
+template<class Range, class IdGenerator, class DBStream>
+void save(const Range& range, DBStream stream, IdGenerator gen) {
+	return save_impl(make_cref(range), stream, gen);
+}
+

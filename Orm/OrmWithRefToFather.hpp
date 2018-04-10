@@ -58,6 +58,12 @@ E& extractRealType(E& e) { return e; }
 template<class E, class Father, class Id>
 std::remove_reference_t<E>& extractRealType(OrmWithRefToFather<Father, E, Id>& e) { return e.m_orm; }
 
+template<class E, class Father, class Id>
+E& extractRealType(const OrmWithRefToFather<Father, E&, Id>& e) { return e.m_orm; }
+
+template<class E, class Father, class Id>
+const E& extractRealType(const OrmWithRefToFather<Father, E, Id>& e) { return e.m_orm; }
+
 template<class Range>
 auto make_cref(const Range& range) {
 	return range | make_transform([](const auto& e) { return std::cref(extractRealType(e)); });
