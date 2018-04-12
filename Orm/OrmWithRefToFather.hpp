@@ -35,6 +35,20 @@ struct OrmWithRefToFather {
 		bool operator()(const OrmWithRefToFather& lhs, const OrmWithRefToFather& rhs) const { return lhs.m_ref_to_father < rhs.m_ref_to_father; }
 	};
 };
+
+template<class T>
+struct orm_with_ref_decay {
+	using type = T;
+};
+template<class Father, class Orm, class Id>
+struct orm_with_ref_decay<OrmWithRefToFather<Father, Orm, Id>>
+{
+	using type = OrmWithRefToFather<Father, std::decay_t<Orm>, Id>;
+};
+
+template<class T>
+using orm_with_ref_decay_t = typename orm_with_ref_decay<T>::type;
+
 template<class T>
 struct orm_undl_type {
 	using type = T;
@@ -98,6 +112,7 @@ struct Datamodel<OrmWithRefToFather<Father, Child, Id>> : Datamodel<Child>
 {
 	using Orm_t = OrmWithRefToFather<Father, Child, Id>;
 	using fields = int;
+	using RealChild = std::decay_t<Child>;
 
 	template<class Fn>
 	struct IndirectAccessor {
@@ -125,11 +140,11 @@ struct Datamodel<OrmWithRefToFather<Father, Child, Id>> : Datamodel<Child>
 				makeIndirectAccessor(std::get<Is>(std::forward<Tuple>(tuple)).m_writer))...);
 	}
 	static auto wrapWithAccessorToRealClass() {
-		return wrap_impl(Datamodel<Child>::columns(), std::make_index_sequence<std::tuple_size<decltype(Datamodel<Child>::columns())>::value>());
+		return wrap_impl(Datamodel<RealChild>::columns(), std::make_index_sequence<std::tuple_size<decltype(Datamodel<RealChild>::columns())>::value>());
 	}
 	static constexpr auto columns() {
 		return std::tuple_cat(wrapWithAccessorToRealClass(),
-			std::make_tuple(createColumn(getRefColName<Father, Child>(), std::mem_fun_ref(&Orm_t::get_ref_to_father), std::mem_fun_ref(&Orm_t::set_ref_to_father))));
+			std::make_tuple(createColumn(getRefColName<Father, RealChild>(), std::mem_fun_ref(&Orm_t::get_ref_to_father), std::mem_fun_ref(&Orm_t::set_ref_to_father))));
 	}
 	static const int father_ref_index = std::tuple_size<decltype(columns())>::value - 1;
 };
