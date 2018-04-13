@@ -20,7 +20,7 @@ void loadChild(const Relation& relation, Range& father_ids, DBHandler handler)
 	auto start = childRange.begin();
 	for (const auto& father : father_ids) {
 		auto p = std::equal_range(start, childRange.end(), father.first, typename child_type_with_father_ref::Compare());
-		auto range = make_range(p.first, p.second) | make_transform([](const auto& e) { return std::ref(e.m_orm); });
+		auto range = make_range(p.first, p.second) | make_transform([](const auto& e) { return std::move(e.m_orm); });
 		relation.m_writer(father.second, container_type(range.begin(), range.end()));
 		start = p.second;
 	}
