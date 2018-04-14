@@ -51,6 +51,6 @@ std::vector<Orm> loadElements(const Query<Orm>& query, DBHandler handler) {
 	std::transform(range_with_ids.begin(), range_with_ids.end(), std::back_inserter(refs_with_ids), [](std::pair<Id, Orm>& p) { return std::make_pair(p.first, std::ref(extractRealType(p.second))); });
 
 	loadChildren_impl<0, undltype>(OneToMany<undltype>::relations(), refs_with_ids, handler);
-	auto range_without_ids = range_with_ids | make_transform([](const auto& p) {return p.second; });
+	auto range_without_ids = range_with_ids | make_transform([](auto& p) {return std::move(p.second); });
 	return std::vector<Orm>(range_without_ids.begin(), range_without_ids.end());	
 }
