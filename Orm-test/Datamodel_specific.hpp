@@ -117,7 +117,7 @@ struct Datamodel<A> {
 	static const std::string table_name() { return "A_Table"; }
 	static auto columns() {
 		return std::make_tuple(createColumn("FIELD", std::mem_fun_ref(&A::getField), std::mem_fun_ref(&A::setField)),
-							   createColumn("VALUE", std::mem_fun_ref(&A::getValue), std::mem_fun_ref(&A::setValue)));
+				       createColumn("VALUE", std::mem_fun_ref(&A::getValue), std::mem_fun_ref(&A::setValue)));
 	}
 };
 
@@ -125,7 +125,7 @@ template<>
 struct OneToMany<A> {
 	static auto relations() {
 		return std::make_tuple(createOneToManyRelation("A_REF", std::mem_fun_ref(&A::getBs), std::mem_fun_ref(&A::setBs)),
-							   createOneToManyRelation("A_REF", std::mem_fun_ref(&A::getCs), std::mem_fun_ref(&A::setCs)));
+				       createOneToManyRelation("A_REF", std::mem_fun_ref(&A::getCs), std::mem_fun_ref(&A::setCs)));
 	}
 };
 
