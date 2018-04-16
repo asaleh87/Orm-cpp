@@ -81,6 +81,35 @@ private:
 };
 
 struct A {
+	static int m_copy_count;
+	static int m_move_count;
+	A(const A& that) : m_field(that.m_field), m_value(that.m_value), m_bs(that.m_bs), m_cs(that.m_cs)
+	{
+		++m_copy_count;
+	}
+
+	A& operator=(const A& that) {
+		++m_copy_count;
+
+		m_field = that.m_field;
+		m_value = that.m_value;
+		m_bs = that.m_bs;
+		m_cs = that.m_cs;
+		return *this;
+	}
+	A& operator=(A&& that) {
+		++m_move_count;
+
+		m_field = that.m_field;
+		m_value = that.m_value;
+		m_bs = that.m_bs;
+		m_cs = that.m_cs;
+		return *this;
+	}
+	A(A&& that) : m_field(that.m_field), m_value(that.m_value), m_bs(that.m_bs), m_cs(that.m_cs)
+	{
+		++m_move_count;
+	}
 	A(std::string field, double value, std::vector<B> bs, std::set<C> cs)
 		: m_field(std::move(field)), m_bs(std::move(bs)), m_value(value), m_cs(std::move(cs)) {}
 

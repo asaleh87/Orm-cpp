@@ -50,10 +50,13 @@ private:
 };
 
 struct A {
+
 	A(std::string field, double value, std::vector<B> bs, std::set<C> cs)
 		: m_field(std::move(field)), m_bs(std::move(bs)), m_value(value), m_cs(std::move(cs)) {}
 
 	A() {}
+
+
 	void setField(std::string val) { m_field = std::move(val); }
 	void setValue(double val) { m_value = val; }
 	void setBs(std::vector<B> val) { m_bs = std::move(val); }
@@ -72,6 +75,7 @@ private:
 	std::set<C> m_cs;
 	double m_value{ 0 };
 };
+int A::m_copy_count = 0;
 
 template<>
 struct Datamodel<A> {

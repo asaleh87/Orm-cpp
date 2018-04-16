@@ -297,13 +297,16 @@ TEST(OrmTest, should_save_one_to_many_range) {
 	Test_tables expected_tables(true);
 	EXPECT_EQ(expected_tables, reached_tables);
 }
+int A::m_copy_count = 0;
+int A::m_move_count = 0;
 
 TEST(OrmTest, should_load_correctly) {
 	Test_tables initial_tables(true);
 	DB_Loader loader(initial_tables);
 	A a("Yay", 2., { B(1,{ D("D1"), D("D2") }), B(4,{ D("D3"), D("D4") }), B(6,{ D("D5"), D("D6") }) }, { C(1.2), C(0.5) });
 	A a2("Boo", 3., { B(2,{ D("D7"), D("D8") }), B(3,{ D("D9"), D("D10") }) }, { C(1.2), C(0.5) });
-
+	A::m_copy_count = 0;
+	A::m_move_count = 0;
 	{
 		Query<A> query;
 		using fields_A = Datamodel<A>::fields;
@@ -321,6 +324,9 @@ TEST(OrmTest, should_load_correctly) {
 		std::vector<A> expected_loaded{ a };
 		EXPECT_EQ(expected_loaded, loaded_elements);
 	}
+	EXPECT_EQ(0, A::m_copy_count);
+	EXPECT_EQ(10, A::m_move_count);
+
 }
 TEST(OrmTest, should_erase_correctly) {
 	{
