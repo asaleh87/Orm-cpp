@@ -88,7 +88,7 @@ struct A {
 		++m_copy_count;
 	}
 
-	A& operator=(const A& that) {
+	A& operator=(const A& that) noexcept {
 		++m_copy_count;
 
 		m_field = that.m_field;
@@ -97,7 +97,7 @@ struct A {
 		m_cs = that.m_cs;
 		return *this;
 	}
-	A& operator=(A&& that) {
+	A& operator=(A&& that) noexcept {
 		++m_move_count;
 
 		m_field = that.m_field;
@@ -106,7 +106,8 @@ struct A {
 		m_cs = that.m_cs;
 		return *this;
 	}
-	A(A&& that) : m_field(that.m_field), m_value(that.m_value), m_bs(that.m_bs), m_cs(that.m_cs)
+	A(A&& that) noexcept 
+		: m_field(that.m_field), m_value(that.m_value), m_bs(that.m_bs), m_cs(that.m_cs)
 	{
 		++m_move_count;
 	}

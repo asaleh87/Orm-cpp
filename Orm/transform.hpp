@@ -59,7 +59,7 @@ auto operator|(const Range& range, transform_wrapper<Fn> transformer) {
 }
 
 template<class Range, class Fn>
-auto operator|(const Range& range, transform_wrapper<Fn, true> transformer) {
+auto operator|(Range& range, transform_wrapper<Fn, true> transformer) {
 	return make_range(make_update_transform_iterator(range.begin(), transformer.m_fn),
 				      make_update_transform_iterator(range.end(), transformer.m_fn));
 }

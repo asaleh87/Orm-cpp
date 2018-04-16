@@ -11,8 +11,7 @@ struct OrmWithRefToFather {
 	OrmWithRefToFather(Orm orm, Id ref_to_father)
 		: m_orm(std::move(orm)), m_ref_to_father(ref_to_father) {}
 
-	template<class O = Orm, class = std::enable_if_t<std::is_default_constructible_v<O>>>
-		OrmWithRefToFather() {}
+	OrmWithRefToFather() {}
 
 	Id get_ref_to_father() const { return m_ref_to_father; }
 	
@@ -21,13 +20,6 @@ struct OrmWithRefToFather {
 	friend std::ostream& operator<<(std::ostream& stream, const OrmWithRefToFather& o) {
 		return stream << o.m_ref_to_father << ',' << o.m_orm;
 	}
-	OrmWithRefToFather& operator=(OrmWithRefToFather&& that) {
-		m_ref_to_father = that.m_ref_to_father;
-		m_orm = std::move(that.m_orm);
-		return *this;
-	}
-
-	OrmWithRefToFather(const OrmWithRefToFather& that) : m_ref_to_father(that.m_ref_to_father), m_orm(that.m_orm) {}
 
 	struct Compare {
 		bool operator()(Id id, const OrmWithRefToFather& o) const { return id < o.m_ref_to_father; }

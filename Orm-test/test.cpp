@@ -305,13 +305,15 @@ TEST(OrmTest, should_load_correctly) {
 	DB_Loader loader(initial_tables);
 	A a("Yay", 2., { B(1,{ D("D1"), D("D2") }), B(4,{ D("D3"), D("D4") }), B(6,{ D("D5"), D("D6") }) }, { C(1.2), C(0.5) });
 	A a2("Boo", 3., { B(2,{ D("D7"), D("D8") }), B(3,{ D("D9"), D("D10") }) }, { C(1.2), C(0.5) });
-	A::m_copy_count = 0;
-	A::m_move_count = 0;
 	{
 		Query<A> query;
 		using fields_A = Datamodel<A>::fields;
 		query.withCriteria<fields_A::FIELD>(std::vector<std::string>{ "Yay", "Boo" });
+
+		A::m_copy_count = 0;
 		auto loaded_elements = loadElements(query, loader);
+		EXPECT_EQ(0, A::m_copy_count);
+
 		std::vector<A> expected_loaded{ a, a2 };
 
 		EXPECT_EQ(expected_loaded, loaded_elements);
@@ -320,12 +322,14 @@ TEST(OrmTest, should_load_correctly) {
 		Query<A> query;
 		using fields_A = Datamodel<A>::fields;
 		query.withCriteria<fields_A::FIELD>(std::vector<std::string>{ "Yay"});
+
+		A::m_copy_count = 0;
 		auto loaded_elements = loadElements(query, loader);
+		EXPECT_EQ(0, A::m_copy_count);
+
 		std::vector<A> expected_loaded{ a };
 		EXPECT_EQ(expected_loaded, loaded_elements);
 	}
-	EXPECT_EQ(0, A::m_copy_count);
-	EXPECT_EQ(10, A::m_move_count);
 
 }
 TEST(OrmTest, should_erase_correctly) {

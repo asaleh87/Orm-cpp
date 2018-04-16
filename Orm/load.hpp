@@ -20,7 +20,10 @@ void loadChild(const Relation& relation, Range& father_ids, DBHandler handler)
 	auto start = childRange.begin();
 	for (const auto& father : father_ids) {
 		auto p = std::equal_range(start, childRange.end(), father.first, typename child_type_with_father_ref::Compare());
-		auto range = make_range(p.first, p.second) | make_update_transform([](auto& e) { return std::move(e.m_orm); });
+		auto range = make_range(p.first, p.second) | make_update_transform([](child_type_with_father_ref& e) {
+			auto tmp(std::move(e.m_orm));
+			return tmp; 
+		});
 		relation.m_writer(father.second, container_type(range.begin(), range.end()));
 		start = p.second;
 	}
@@ -51,6 +54,9 @@ std::vector<Orm> loadElements(const Query<Orm>& query, DBHandler handler) {
 	std::transform(range_with_ids.begin(), range_with_ids.end(), std::back_inserter(refs_with_ids), [](std::pair<Id, Orm>& p) { return std::make_pair(p.first, std::ref(extractRealType(p.second))); });
 
 	loadChildren_impl<0, undltype>(OneToMany<undltype>::relations(), refs_with_ids, handler);
-	auto range_without_ids = range_with_ids | make_update_transform([](auto& p) {return std::move(p.second); });
+	auto range_without_ids = range_with_ids | make_update_transform([](std::pair<Id, Orm>& p) {
+		auto tmp = std::move(p.second);
+		return tmp; 
+	});
 	return std::vector<Orm>(range_without_ids.begin(), range_without_ids.end());	
 }
