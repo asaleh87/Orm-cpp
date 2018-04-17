@@ -215,7 +215,9 @@ struct DB_Loader {
 		std::vector<std::pair<unsigned long, Orm>> elements;
 		Range filtered_elements;
 		std::copy_if(range.begin(), range.end(), std::back_inserter(filtered_elements), createFilter(query.getAllCriterias()));
-		std::transform(filtered_elements.begin(), filtered_elements.end(), std::back_inserter(elements), [](const auto& p) {return std::make_pair(p.first, fromTuple<Orm>(p.second)); });
+		std::transform(filtered_elements.begin(), filtered_elements.end(), std::back_inserter(elements), [](const auto& p) {
+			return std::make_pair(p.first, fromTuple<Orm>(p.second)); 
+		});
 		return elements;
 	}
 	template<class T>
@@ -297,8 +299,7 @@ TEST(OrmTest, should_save_one_to_many_range) {
 	Test_tables expected_tables(true);
 	EXPECT_EQ(expected_tables, reached_tables);
 }
-int A::m_copy_count = 0;
-int A::m_move_count = 0;
+int CopyCounter<A>::m_copy_count = 0;
 
 TEST(OrmTest, should_load_correctly) {
 	Test_tables initial_tables(true);
@@ -310,9 +311,9 @@ TEST(OrmTest, should_load_correctly) {
 		using fields_A = Datamodel<A>::fields;
 		query.withCriteria<fields_A::FIELD>(std::vector<std::string>{ "Yay", "Boo" });
 
-		A::m_copy_count = 0;
+		CopyCounter<A>::m_copy_count = 0;
 		auto loaded_elements = loadElements(query, loader);
-		EXPECT_EQ(0, A::m_copy_count);
+		EXPECT_EQ(0, CopyCounter<A>::m_copy_count);
 
 		std::vector<A> expected_loaded{ a, a2 };
 
@@ -323,9 +324,9 @@ TEST(OrmTest, should_load_correctly) {
 		using fields_A = Datamodel<A>::fields;
 		query.withCriteria<fields_A::FIELD>(std::vector<std::string>{ "Yay"});
 
-		A::m_copy_count = 0;
+		CopyCounter<A>::m_copy_count = 0;
 		auto loaded_elements = loadElements(query, loader);
-		EXPECT_EQ(0, A::m_copy_count);
+		EXPECT_EQ(0, CopyCounter<A>::m_copy_count);
 
 		std::vector<A> expected_loaded{ a };
 		EXPECT_EQ(expected_loaded, loaded_elements);

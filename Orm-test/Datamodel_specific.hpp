@@ -80,17 +80,27 @@ private:
 	double m_d{ 0 };
 };
 
-struct A {
+template<class Impl>
+struct CopyCounter {
 	static int m_copy_count;
-	static int m_move_count;
-	A(const A& that) : m_field(that.m_field), m_value(that.m_value), m_bs(that.m_bs), m_cs(that.m_cs)
-	{
-		++m_copy_count;
+	CopyCounter() noexcept {}
+	CopyCounter(const CopyCounter&) noexcept { 
+		++m_copy_count; 
 	}
+	CopyCounter& operator=(const CopyCounter&) noexcept {
+		++m_copy_count; 
+		return *this; 
+	}
+	CopyCounter(CopyCounter&&) noexcept {}
+	CopyCounter& operator=(CopyCounter&&) noexcept { return *this; }
+};
+struct A : CopyCounter<A> {
+	static int m_copy_count;
+	A(const A& that) : CopyCounter<A>(that), m_field(that.m_field), m_value(that.m_value), m_bs(that.m_bs), m_cs(that.m_cs)
+	{}
 
 	A& operator=(const A& that) noexcept {
-		++m_copy_count;
-
+		static_cast<CopyCounter<A>>(*this) = that;
 		m_field = that.m_field;
 		m_value = that.m_value;
 		m_bs = that.m_bs;
@@ -98,8 +108,6 @@ struct A {
 		return *this;
 	}
 	A& operator=(A&& that) noexcept {
-		++m_move_count;
-
 		m_field = that.m_field;
 		m_value = that.m_value;
 		m_bs = that.m_bs;
@@ -108,9 +116,8 @@ struct A {
 	}
 	A(A&& that) noexcept 
 		: m_field(that.m_field), m_value(that.m_value), m_bs(that.m_bs), m_cs(that.m_cs)
-	{
-		++m_move_count;
-	}
+	{}
+
 	A(std::string field, double value, std::vector<B> bs, std::set<C> cs)
 		: m_field(std::move(field)), m_bs(std::move(bs)), m_value(value), m_cs(std::move(cs)) {}
 
@@ -140,58 +147,21 @@ private:
 	}
 };
 
-template<>
-struct Datamodel<A> {
-	enum class fields {FIELD =0, VALUE};
-	static const std::string ref_label() { return "REF"; }
-	static const std::string table_name() { return "A_Table"; }
-	static auto columns() {
-		return std::make_tuple(createColumn("FIELD", std::mem_fun_ref(&A::getField), std::mem_fun_ref(&A::setField)),
-				       createColumn("VALUE", std::mem_fun_ref(&A::getValue), std::mem_fun_ref(&A::setValue)));
-	}
-};
+// DECLARE DATAMODELS
+template<> struct FieldIndex<A> { enum class type { FIELD = 0, VALUE }; };
+DECLARE_DATAMODEL_2(A, "A_Table", "REF",
+					createColumn("FIELD", std::mem_fun_ref(&A::getField), std::mem_fun_ref(&A::setField)),
+					createColumn("VALUE", std::mem_fun_ref(&A::getValue), std::mem_fun_ref(&A::setValue)));
 
-template<>
-struct OneToMany<A> {
-	static auto relations() {
-		return std::make_tuple(createOneToManyRelation("A_REF", std::mem_fun_ref(&A::getBs), std::mem_fun_ref(&A::setBs)),
-				       createOneToManyRelation("A_REF", std::mem_fun_ref(&A::getCs), std::mem_fun_ref(&A::setCs)));
-	}
-};
+DECLARE_ONETOMANY_2(A,
+					createOneToManyRelation("A_REF", std::mem_fun_ref(&A::getBs), std::mem_fun_ref(&A::setBs)),
+					createOneToManyRelation("A_REF", std::mem_fun_ref(&A::getCs), std::mem_fun_ref(&A::setCs)));
 
+DECLARE_DATAMODEL_1(B, "B_Table", "REF", createColumn("INT", std::mem_fun_ref(&B::getI), std::mem_fun_ref(&B::setI)));
 
-template<>
-struct Datamodel<B> {
-	enum class fields {INT=0};
-	static const std::string ref_label() { return "REF"; }
-	static const std::string table_name() { return "B_Table"; }
-	static auto columns() {
-		return std::make_tuple(createColumn("INT", std::mem_fun_ref(&B::getI), std::mem_fun_ref(&B::setI)));
-	}
-};
+DECLARE_ONETOMANY_1(B, createOneToManyRelation("B_REF", std::mem_fun_ref(&B::getDs), std::mem_fun_ref(&B::setDs)));
 
-template<>
-struct OneToMany<B> {
-	static auto relations() {
-		return std::make_tuple(createOneToManyRelation("B_REF", std::mem_fun_ref(&B::getDs), std::mem_fun_ref(&B::setDs)));
-	}
-};
-template<>
-struct Datamodel<C> {
-	enum class fields {DBL=0};
-	static const std::string ref_label() { return "REF"; }
-	static const std::string table_name() { return "C_Table"; }
-	static auto columns() {
-		return std::make_tuple(createColumn("DBL", std::mem_fun_ref(&C::getD), std::mem_fun_ref(&C::setD)));
-	}
-};
+DECLARE_DATAMODEL_1(C, "C_Table", "REF", createColumn("DBL", std::mem_fun_ref(&C::getD), std::mem_fun_ref(&C::setD)));
 
-template<>
-struct Datamodel<D> {
-	enum class fields {STR=0};
-	static const std::string ref_label() { return "REF"; }
-	static const std::string table_name() { return "D_Table"; }
-	static auto columns() {
-		return std::make_tuple(createColumn("STR", std::mem_fun_ref(&D::getS), std::mem_fun_ref(&D::setS)));
-	}
-};
+DECLARE_DATAMODEL_1(D, "D_Table", "REF", createColumn("STR", std::mem_fun_ref(&D::getS), std::mem_fun_ref(&D::setS)));
+
