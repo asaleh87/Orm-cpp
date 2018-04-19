@@ -300,6 +300,9 @@ TEST(OrmTest, should_save_one_to_many_range) {
 	EXPECT_EQ(expected_tables, reached_tables);
 }
 int CopyCounter<A>::m_copy_count = 0;
+int CopyCounter<B>::m_copy_count = 0;
+int CopyCounter<C>::m_copy_count = 0;
+int CopyCounter<D>::m_copy_count = 0;
 
 TEST(OrmTest, should_load_correctly) {
 	Test_tables initial_tables(true);
@@ -325,8 +328,14 @@ TEST(OrmTest, should_load_correctly) {
 		query.withCriteria<fields_A::FIELD>(std::vector<std::string>{ "Yay"});
 
 		CopyCounter<A>::m_copy_count = 0;
+		CopyCounter<B>::m_copy_count = 0;
+		CopyCounter<C>::m_copy_count = 0;
+		CopyCounter<D>::m_copy_count = 0;
 		auto loaded_elements = loadElements(query, loader);
 		EXPECT_EQ(0, CopyCounter<A>::m_copy_count);
+		EXPECT_EQ(0, CopyCounter<B>::m_copy_count);
+		EXPECT_EQ(0, CopyCounter<C>::m_copy_count);
+		EXPECT_EQ(0, CopyCounter<D>::m_copy_count);
 
 		std::vector<A> expected_loaded{ a };
 		EXPECT_EQ(expected_loaded, loaded_elements);

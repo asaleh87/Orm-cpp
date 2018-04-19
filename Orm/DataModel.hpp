@@ -7,14 +7,25 @@ struct Datamodel {};
 
 template<class Orm>
 struct FieldIndex { using type = size_t; };
-
+#define DECLARE_DATAMODEL(Type, Table, REFCOLUMN, TUPLE)\
+template<>\
+struct Datamodel<Type> {\
+	using fields = typename FieldIndex<Type>::type;																	   \
+	static const std::string ref_label() { return Table; }															   \
+	static const std::string table_name() { return REFCOLUMN; }														   \
+	static auto columns() -> decltype(TUPLE) \
+	{ \
+		return TUPLE;					   \
+	}																												   \
+};					
 #define DECLARE_DATAMODEL_1(Type, Table, REFCOLUMN, COL1)\
 template<>\
 struct Datamodel<Type> {\
 	using fields = typename FieldIndex<Type>::type;																	   \
 	static const std::string ref_label() { return Table; }															   \
 	static const std::string table_name() { return REFCOLUMN; }														   \
-	static auto columns() {																							   \
+	static auto columns() -> decltype(std::make_tuple(COL1)) \
+	{ \
 		return std::make_tuple(COL1);					   \
 	}																												   \
 };																													   \
@@ -25,10 +36,11 @@ struct Datamodel<Type> {																								   \
 	using fields = typename FieldIndex<Type>::type;																	   \
 	static const std::string ref_label() { return Table; }															   \
 	static const std::string table_name() { return REFCOLUMN; }														   \
-	static auto columns() {																							   \
-		return std::make_tuple(COL1, COL2);					   \
-	}																												   \
-};
+	static auto columns() -> decltype(std::make_tuple(COL1, COL2))\
+    {\
+		return std::make_tuple(COL1, COL2);\
+	}\
+};\
 
 #define DECLARE_DATAMODEL_3(Type, Table, REFCOLUMN, COL1, COL2, COL3)																   \
  template<>																											   \
@@ -36,7 +48,8 @@ struct Datamodel<Type> {																								   \
 	using fields = typename FieldIndex<Type>::type;																	   \
 	static const std::string ref_label() { return Table; }															   \
 	static const std::string table_name() { return REFCOLUMN; }														   \
-	static auto columns() {																							   \
+	static auto columns() -> decltype(std::make_tuple(COL1, COL2, COL3))\
+	{\																							   \
 		return std::make_tuple(COL1, COL2, COL3);					   \
 	}																												   \
 };		
@@ -46,7 +59,8 @@ struct Datamodel<Type> {																								   \
 	using fields = typename FieldIndex<Type>::type;																	   \
 	static const std::string ref_label() { return Table; }															   \
 	static const std::string table_name() { return REFCOLUMN; }														   \
-	static auto columns() {																							   \
+	static auto columns() -> decltype(td::make_tuple(COL1, COL2, COL3, COL4))\
+	{\																							   \
 		return std::make_tuple(COL1, COL2, COL3, COL4);					   \
 	}																												   \
 };		
@@ -56,7 +70,8 @@ struct Datamodel<Type> {																								   \
 	using fields = typename FieldIndex<Type>::type;																	   \
 	static const std::string ref_label() { return Table; }															   \
 	static const std::string table_name() { return REFCOLUMN; }														   \
-	static auto columns() {																							   \
+	static auto columns() -> decltype(std::make_tuple(COL1, COL2, COL3, COL4, COL5))\
+	{\																							   \
 		return std::make_tuple(COL1, COL2, COL3, COL4, COL5);					   \
 	}																												   \
 };		
@@ -66,7 +81,7 @@ struct Datamodel<Type> {																								   \
 	using fields = typename FieldIndex<Type>::type;																	   \
 	static const std::string ref_label() { return Table; }															   \
 	static const std::string table_name() { return REFCOLUMN; }														   \
-	static auto columns() {																							   \
+	static auto columns() -> decltype(std::make_tuple(COL1, COL2, COL3, COL4, COL5, COL6)) {																							   \
 		return std::make_tuple(COL1, COL2, COL3, COL4, COL5, COL6);					   \
 	}																												   \
 };		
@@ -77,7 +92,7 @@ struct Datamodel<Type> {																								   \
 	using fields = typename FieldIndex<Type>::type;																	   \
 	static const std::string ref_label() { return Table; }															   \
 	static const std::string table_name() { return REFCOLUMN; }														   \
-	static auto columns() {																							   \
+	static auto columns() -> decltype(std::make_tuple(COL1, COL2, COL3, COL4, COL5, COL6, COL7)) {																							   \
 		return std::make_tuple(COL1, COL2, COL3, COL4, COL5, COL6, COL7);					   \
 	}																												   \
 };		
@@ -87,7 +102,7 @@ struct Datamodel<Type> {																							   \
 	using fields = typename FieldIndex<Type>::type;																	   \
 	static const std::string ref_label() { return Table; }															   \
 	static const std::string table_name() { return REFCOLUMN; }														   \
-	static auto columns() {																							   \
+	static auto columns() -> decltype(std::make_tuple(COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8)) {																							   \
 		return std::make_tuple(COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8);					   \
 	}																												   \
 };		
@@ -97,17 +112,17 @@ struct Datamodel<Type> {																							   \
 	using fields = typename FieldIndex<Type>::type;																	   \
 	static const std::string ref_label() { return Table; }															   \
 	static const std::string table_name() { return REFCOLUMN; }														   \
-	static auto columns() {																							   \
+	static auto columns() -> decltype(std::make_tuple(COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8, COL9)) {																							   \
 		return std::make_tuple(COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8, COL9);					   \
 	}																												   \
 };		
-#define DECLARE_DATAMODEL_10(Type, Table, REFCOLUMN, COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8, COL9, COL10)		   \
+#define DECLARE_DATAMODEL_10(Type, Table, REFCOLUMN, COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8, COL9, COL10))		   \
  template<>																											   \
 struct Datamodel<Type> {																								   \
 	using fields = typename FieldIndex<Type>::type;																	   \
 	static const std::string ref_label() { return Table; }															   \
 	static const std::string table_name() { return REFCOLUMN; }														   \
-	static auto columns() {																							   \
+	static auto columns() -> decltype(std::make_tuple(COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8, COL9, COL10)) {																							   \
 		return std::make_tuple(COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8, COL9, COL10);						\
 	}																												   \
 };		

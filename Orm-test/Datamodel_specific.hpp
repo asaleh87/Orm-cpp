@@ -25,7 +25,40 @@ template<class Range>
 auto makeRangePrinter(const Range& range) {
 	return RangePrinter<Range>(range);
 }
-struct D {
+
+
+template<class Impl>
+struct CopyCounter {
+	static int m_copy_count;
+	CopyCounter() noexcept {}
+	CopyCounter(const CopyCounter&) noexcept {
+		++m_copy_count;
+	}
+	CopyCounter& operator=(const CopyCounter&) noexcept {
+		++m_copy_count;
+		return *this;
+	}
+	CopyCounter(CopyCounter&&) noexcept {}
+	CopyCounter& operator=(CopyCounter&&) noexcept { return *this; }
+};
+
+struct D : CopyCounter<D> {
+	template<class That>
+	void init(That&& that) {
+		static_cast<CopyCounter<D>&>(*this) = std::forward<That>(that);
+		m_s = that.m_s;
+	}
+	D& operator=(D&& that) noexcept {
+		init(std::move(that));
+		return *this;
+	}
+	D& operator=(const D& that) noexcept {
+		init(that);
+		return *this;
+	}
+	D(D&& that) noexcept { init(std::move(that)); }
+	D(const D& that) noexcept { init(that); }
+
 	D() {}
 	const std::string& getS() const { return m_s; }
 	void setS(std::string val) { m_s = std::move(val); }
@@ -40,11 +73,29 @@ struct D {
 private:
 	std::string m_s;
 };
-struct B {
+
+struct B : CopyCounter<B> {
 	B() {}
 	int getI() const { return m_i; }
 	void setI(int val) { m_i = val; }
 	explicit B(int i, std::vector<D> ds) : m_i(i), m_ds(ds) {}
+
+	template<class That>
+	void init(That&& that) {
+		static_cast<CopyCounter<B>&>(*this) = std::forward<That>(that);
+		m_i = that.m_i;
+		m_ds = std::move(that.m_ds);
+	}
+	B& operator=(B&& that) noexcept {
+		init(std::move(that));
+		return *this;
+	}
+	B& operator=(const B& that) noexcept {
+		init(that);
+		return *this;
+	}
+	B(B&& that) noexcept { init(std::move(that)); }
+	B(const B& that) noexcept { init(that); }
 
 	friend std::ostream& operator<<(std::ostream& stream, const B& b) {
 		return stream << makeTuplePrinter(std::make_tuple(b.m_i, makeRangePrinter(b.m_ds)));
@@ -62,11 +113,27 @@ private:
 	std::vector<D> m_ds;
 };
 
-struct C {
+struct C : CopyCounter<C> {
 
 	double getD() const { return m_d; }
 	void setD(double val) { m_d = val; }
 	explicit C(double d) : m_d(d) {}
+	template<class That>
+	void init(That&& that) {
+		static_cast<CopyCounter<C>&>(*this) = std::forward<That>(that);
+		m_d = that.m_d;
+	}
+	C& operator=(C&& that) noexcept {
+		init(std::move(that));
+		return *this;
+	}
+	C& operator=(const C& that) noexcept {
+		init(that);
+		return *this;
+	}
+	C(C&& that) noexcept { init(std::move(that)); }
+	C(const C& that) noexcept { init(that); }
+
 	C() {}
 	friend bool operator<(const C& lhs, const C& rhs) { return lhs.m_d < rhs.m_d; }
 	friend std::ostream& operator<<(std::ostream& stream, const C& c) {
@@ -80,43 +147,28 @@ private:
 	double m_d{ 0 };
 };
 
-template<class Impl>
-struct CopyCounter {
-	static int m_copy_count;
-	CopyCounter() noexcept {}
-	CopyCounter(const CopyCounter&) noexcept { 
-		++m_copy_count; 
-	}
-	CopyCounter& operator=(const CopyCounter&) noexcept {
-		++m_copy_count; 
-		return *this; 
-	}
-	CopyCounter(CopyCounter&&) noexcept {}
-	CopyCounter& operator=(CopyCounter&&) noexcept { return *this; }
-};
 struct A : CopyCounter<A> {
-	static int m_copy_count;
-	A(const A& that) : CopyCounter<A>(that), m_field(that.m_field), m_value(that.m_value), m_bs(that.m_bs), m_cs(that.m_cs)
-	{}
-
-	A& operator=(const A& that) noexcept {
-		static_cast<CopyCounter<A>>(*this) = that;
-		m_field = that.m_field;
+	template<class That>
+	void init(That&& that) {
+		static_cast<CopyCounter<A>&>(*this) = std::forward<That>(that);
+		m_field = std::move(that.m_field);
 		m_value = that.m_value;
-		m_bs = that.m_bs;
-		m_cs = that.m_cs;
+		m_bs = std::move(that.m_bs);
+		m_cs = std::move(that.m_cs);
+	}
+
+	static int m_copy_count;
+	A(const A& that) { init(that); }
+	A(A&& that) noexcept { init(std::move(that)); }
+
+	A& operator=(const A& that) noexcept { 
+		init(that);
 		return *this;
 	}
 	A& operator=(A&& that) noexcept {
-		m_field = that.m_field;
-		m_value = that.m_value;
-		m_bs = that.m_bs;
-		m_cs = that.m_cs;
+		init(std::move(that));
 		return *this;
 	}
-	A(A&& that) noexcept 
-		: m_field(that.m_field), m_value(that.m_value), m_bs(that.m_bs), m_cs(that.m_cs)
-	{}
 
 	A(std::string field, double value, std::vector<B> bs, std::set<C> cs)
 		: m_field(std::move(field)), m_bs(std::move(bs)), m_value(value), m_cs(std::move(cs)) {}
@@ -124,7 +176,9 @@ struct A : CopyCounter<A> {
 	A() {}
 	void setField(std::string val) { m_field = std::move(val); }
 	void setValue(double val) { m_value = val; }
-	void setBs(std::vector<B> val) { m_bs = std::move(val); }
+	void setBs(std::vector<B> val) { 
+		m_bs = std::move(val); 
+	}
 	void setCs(std::set<C> val) { m_cs = std::move(val); }
 
 	const std::string& getField() const { return m_field; }
@@ -147,21 +201,34 @@ private:
 	}
 };
 
+//re-implement std::mem_fun_ref for setters to propagate move of parameter
+template<class Res, class T, class P>
+struct Writer {
+	Res(T::*m_fn)(P);
+	explicit Writer(Res(T::*fn)(P)) : m_fn(fn) {}
+	Res operator()(T& t, P arg) const {
+		return (t.*m_fn)(std::move(arg));
+	}
+};
+
+template<class Res, class T, class P>
+Writer<Res, T, P> writer(Res(T::*fn)(P)) { return Writer<Res, T, P>(fn); }
+
 // DECLARE DATAMODELS
 template<> struct FieldIndex<A> { enum class type { FIELD = 0, VALUE }; };
 DECLARE_DATAMODEL_2(A, "A_Table", "REF",
-					createColumn("FIELD", std::mem_fun_ref(&A::getField), std::mem_fun_ref(&A::setField)),
-					createColumn("VALUE", std::mem_fun_ref(&A::getValue), std::mem_fun_ref(&A::setValue)));
+					createColumn("FIELD", std::mem_fun_ref(&A::getField), writer(&A::setField)),
+					createColumn("VALUE", std::mem_fun_ref(&A::getValue), writer(&A::setValue)));
 
 DECLARE_ONETOMANY_2(A,
-					createOneToManyRelation("A_REF", std::mem_fun_ref(&A::getBs), std::mem_fun_ref(&A::setBs)),
-					createOneToManyRelation("A_REF", std::mem_fun_ref(&A::getCs), std::mem_fun_ref(&A::setCs)));
+					createOneToManyRelation("A_REF", std::mem_fun_ref(&A::getBs), writer(&A::setBs)),
+					createOneToManyRelation("A_REF", std::mem_fun_ref(&A::getCs), writer(&A::setCs)));
 
-DECLARE_DATAMODEL_1(B, "B_Table", "REF", createColumn("INT", std::mem_fun_ref(&B::getI), std::mem_fun_ref(&B::setI)));
+DECLARE_DATAMODEL_1(B, "B_Table", "REF", createColumn("INT", std::mem_fun_ref(&B::getI), writer(&B::setI)));
 
-DECLARE_ONETOMANY_1(B, createOneToManyRelation("B_REF", std::mem_fun_ref(&B::getDs), std::mem_fun_ref(&B::setDs)));
+DECLARE_ONETOMANY_1(B, createOneToManyRelation("B_REF", std::mem_fun_ref(&B::getDs), writer(&B::setDs)));
 
-DECLARE_DATAMODEL_1(C, "C_Table", "REF", createColumn("DBL", std::mem_fun_ref(&C::getD), std::mem_fun_ref(&C::setD)));
+DECLARE_DATAMODEL_1(C, "C_Table", "REF", createColumn("DBL", std::mem_fun_ref(&C::getD), writer(&C::setD)));
 
-DECLARE_DATAMODEL_1(D, "D_Table", "REF", createColumn("STR", std::mem_fun_ref(&D::getS), std::mem_fun_ref(&D::setS)));
+DECLARE_DATAMODEL_1(D, "D_Table", "REF", createColumn("STR", std::mem_fun_ref(&D::getS), writer(&D::setS)));
 
