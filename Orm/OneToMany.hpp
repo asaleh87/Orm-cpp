@@ -27,7 +27,7 @@ OneToManyRelation<Accessor, Writer> createOneToManyRelation(std::string refColum
 #define DECLARE_ONETOMANY_1(Type, COL1)\
 template<>\
 struct OneToMany<Type> {\
-	static auto relations() {																							   \
+	static auto relations() -> decltype(std::make_tuple(COL1)) {																							   \
 		return std::make_tuple(COL1);					   \
 	}																												   \
 };																													   \
@@ -35,7 +35,7 @@ struct OneToMany<Type> {\
 #define DECLARE_ONETOMANY_2(Type, COL1, COL2)\
  template<>\
 struct OneToMany<Type> {\
-	static auto relations() {\
+	static auto relations() -> decltype(std::make_tuple(COL1, COL2)) {\
 		return std::make_tuple(COL1, COL2);\
 	}\
 };\
@@ -43,28 +43,28 @@ struct OneToMany<Type> {\
 #define DECLARE_ONETOMANY_3(Type, COL1, COL2, COL3)																   \
  template<>																											   \
 struct OneToMany<Type> {																								   \
-	static auto relations() {																							   \
+	static auto relations() -> decltype(std::make_tuple(COL1, COL2, COL3)) {																							   \
 		return std::make_tuple(COL1, COL2, COL3);					   \
 	}																												   \
 };		
 #define DECLARE_ONETOMANY_4(Type, COL1, COL2, COL3, COL4)																   \
  template<>																											   \
 struct OneToMany<Type> {																								   \
-	static auto relations() {																							   \
+	static auto relations() -> decltype(std::make_tuple(COL1, COL2, COL3, COL4)) {																							   \
 		return std::make_tuple(COL1, COL2, COL3, COL4);					   \
 	}																												   \
 };		
 #define DECLARE_ONETOMANY_5(Type, COL1, COL2, COL3, COL4, COL5)																   \
  template<>																											   \
 struct OneToMany<Type> {																								   \
-	static auto relations() {																							   \
+	static auto relations() -> decltype(std::make_tuple(COL1, COL2, COL3, COL4, COL5)) {																							   \
 		return std::make_tuple(COL1, COL2, COL3, COL4, COL5);					   \
 	}																												   \
 };		
 #define DECLARE_ONETOMANY_6(Type, COL1, COL2, COL3, COL4, COL5, COL6)																   \
  template<>																											   \
 struct OneToMany<Type> {																								   \
-	static auto relations() {																							   \
+	static auto relations() -> decltype(std::make_tuple(COL1, COL2, COL3, COL4, COL5, COL6)) {																							   \
 		return std::make_tuple(COL1, COL2, COL3, COL4, COL5, COL6);					   \
 	}																												   \
 };		
@@ -72,28 +72,28 @@ struct OneToMany<Type> {																								   \
 #define DECLARE_ONETOMANY_7(Type, COL1, COL2, COL3, COL4, COL5, COL6, COL7)																   \
  template<>																											   \
 struct OneToMany<Type> {																								   \
-	static auto relations() {																							   \
+	static auto relations() -> decltype(std::make_tuple(COL1, COL2, COL3, COL4, COL5, COL6, COL7)) {																							   \
 		return std::make_tuple(COL1, COL2, COL3, COL4, COL5, COL6, COL7);					   \
 	}																												   \
 };		
 #define DECLARE_ONETOMANY_8(Type, COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8)																   \
  template<>																											   \
 struct OneToMany<Type> {																							   \
-	static auto relations() {																							   \
+	static auto relations() -> decltype(std::make_tuple(COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8)) {																							   \
 		return std::make_tuple(COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8);					   \
 	}																												   \
 };		
 #define DECLARE_ONETOMANY_9(Type, COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8, COL9)				   \
  template<>																											   \
 struct OneToMany<Type> {																							   \
-	static auto relations() {																							   \
+	static auto relations() -> decltype(std::make_tuple(COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8, COL9)) {																							   \
 		return std::make_tuple(COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8, COL9);					   \
 	}																												   \
 };		
 #define DECLARE_ONETOMANY_10(Type, COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8, COL9, COL10)		   \
  template<>																											   \
 struct OneToMany<Type> {																								   \
-	static auto relations() {																							   \
+	static auto relations() -> decltype(std::make_tuple(COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8, COL9, COL10)) {																							   \
 		return std::make_tuple(COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8, COL9, COL10);						\
 	}																												   \
 };	

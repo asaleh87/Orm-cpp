@@ -18,6 +18,7 @@ struct Datamodel<Type> {\
 		return TUPLE;					   \
 	}																												   \
 };					
+
 #define DECLARE_DATAMODEL_1(Type, Table, REFCOLUMN, COL1)\
 template<>\
 struct Datamodel<Type> {\
