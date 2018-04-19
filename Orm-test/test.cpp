@@ -304,6 +304,20 @@ int CopyCounter<B>::m_copy_count = 0;
 int CopyCounter<C>::m_copy_count = 0;
 int CopyCounter<D>::m_copy_count = 0;
 
+void reset_copy_counters() {
+	CopyCounter<A>::m_copy_count = 0;
+	CopyCounter<B>::m_copy_count = 0;
+	CopyCounter<C>::m_copy_count = 0;
+	CopyCounter<D>::m_copy_count = 0;
+}
+
+void expect_zero_copy_count() {
+	EXPECT_EQ(0, CopyCounter<A>::m_copy_count);
+	EXPECT_EQ(0, CopyCounter<B>::m_copy_count);
+	EXPECT_EQ(0, CopyCounter<C>::m_copy_count);
+	EXPECT_EQ(0, CopyCounter<D>::m_copy_count);
+}
+
 TEST(OrmTest, should_load_correctly) {
 	Test_tables initial_tables(true);
 	DB_Loader loader(initial_tables);
@@ -314,9 +328,9 @@ TEST(OrmTest, should_load_correctly) {
 		using fields_A = Datamodel<A>::fields;
 		query.withCriteria<fields_A::FIELD>(std::vector<std::string>{ "Yay", "Boo" });
 
-		CopyCounter<A>::m_copy_count = 0;
+		reset_copy_counters();
 		auto loaded_elements = loadElements(query, loader);
-		EXPECT_EQ(0, CopyCounter<A>::m_copy_count);
+		expect_zero_copy_count();
 
 		std::vector<A> expected_loaded{ a, a2 };
 
@@ -327,15 +341,9 @@ TEST(OrmTest, should_load_correctly) {
 		using fields_A = Datamodel<A>::fields;
 		query.withCriteria<fields_A::FIELD>(std::vector<std::string>{ "Yay"});
 
-		CopyCounter<A>::m_copy_count = 0;
-		CopyCounter<B>::m_copy_count = 0;
-		CopyCounter<C>::m_copy_count = 0;
-		CopyCounter<D>::m_copy_count = 0;
+		reset_copy_counters();
 		auto loaded_elements = loadElements(query, loader);
-		EXPECT_EQ(0, CopyCounter<A>::m_copy_count);
-		EXPECT_EQ(0, CopyCounter<B>::m_copy_count);
-		EXPECT_EQ(0, CopyCounter<C>::m_copy_count);
-		EXPECT_EQ(0, CopyCounter<D>::m_copy_count);
+		expect_zero_copy_count();
 
 		std::vector<A> expected_loaded{ a };
 		EXPECT_EQ(expected_loaded, loaded_elements);
