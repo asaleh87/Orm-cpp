@@ -216,19 +216,19 @@ Writer<Res, T, P> writer(Res(T::*fn)(P)) { return Writer<Res, T, P>(fn); }
 
 // DECLARE DATAMODELS
 template<> struct FieldIndex<A> { enum class type { FIELD = 0, VALUE }; };
-DECLARE_DATAMODEL_2(A, "A_Table", "REF",
+DECLARE_DATAMODEL(A, "A_Table", "REF",
 					createColumn("FIELD", std::mem_fun_ref(&A::getField), writer(&A::setField)),
 					createColumn("VALUE", std::mem_fun_ref(&A::getValue), writer(&A::setValue)));
 
-DECLARE_ONETOMANY_2(A,
+DECLARE_ONETOMANY(A,
 					createOneToManyRelation("A_REF", std::mem_fun_ref(&A::getBs), writer(&A::setBs)),
 					createOneToManyRelation("A_REF", std::mem_fun_ref(&A::getCs), writer(&A::setCs)));
 
-DECLARE_DATAMODEL_1(B, "B_Table", "REF", createColumn("INT", std::mem_fun_ref(&B::getI), writer(&B::setI)));
+DECLARE_DATAMODEL(B, "B_Table", "REF", createColumn("INT", std::mem_fun_ref(&B::getI), writer(&B::setI)));
 
-DECLARE_ONETOMANY_1(B, createOneToManyRelation("B_REF", std::mem_fun_ref(&B::getDs), writer(&B::setDs)));
+DECLARE_ONETOMANY(B, createOneToManyRelation("B_REF", std::mem_fun_ref(&B::getDs), writer(&B::setDs)));
 
-DECLARE_DATAMODEL_1(C, "C_Table", "REF", createColumn("DBL", std::mem_fun_ref(&C::getD), writer(&C::setD)));
+DECLARE_DATAMODEL(C, "C_Table", "REF", createColumn("DBL", std::mem_fun_ref(&C::getD), writer(&C::setD)));
 
-DECLARE_DATAMODEL_1(D, "D_Table", "REF", createColumn("STR", std::mem_fun_ref(&D::getS), writer(&D::setS)));
+DECLARE_DATAMODEL(D, "D_Table", "REF", createColumn("STR", std::mem_fun_ref(&D::getS), writer(&D::setS)));
 
