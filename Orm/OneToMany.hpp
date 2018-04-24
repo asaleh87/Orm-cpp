@@ -1,4 +1,5 @@
 #pragma once
+#include "FieldAccessor.hpp"
 
 #include <tuple>
 #include <string>
@@ -24,6 +25,11 @@ OneToManyRelation<Accessor, Writer> createOneToManyRelation(std::string refColum
 	return OneToManyRelation<Accessor, Writer>(refColumn, accessor, writer);
 }
 
+template<class T, class FieldType>
+auto createOneToManyRelation(std::string refColumn, FieldType T::* field) {
+	auto accessor = makeFieldAccessor(field);
+	return createOneToManyRelation(refColumn, accessor, accessor);
+}
 #define DECLARE_ONETOMANY(Type, ...)\
 template<>\
 struct OneToMany<Type> {\

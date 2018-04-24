@@ -1,4 +1,5 @@
 #pragma once
+#include "FieldAccessor.hpp"
 
 #include <string>
 
@@ -32,4 +33,10 @@ struct Column {
 template<class Accessor, class Writer>
 Column<Accessor, Writer> createColumn(std::string fieldName, Accessor accessor, Writer writer) {
 	return Column<Accessor, Writer>(fieldName, accessor, writer);
+}
+
+template<class T, class FieldType>
+auto createColumn(std::string fieldName, FieldType T::* field) {
+	auto accessor = makeFieldAccessor(field);
+	return createColumn(fieldName, accessor, accessor);
 }

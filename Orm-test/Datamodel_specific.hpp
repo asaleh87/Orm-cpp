@@ -70,7 +70,6 @@ struct D : CopyCounter<D> {
 	friend bool operator==(const D& lhs, const D& rhs) {
 		return lhs.m_s == rhs.m_s;
 	}
-private:
 	std::string m_s;
 };
 
@@ -108,7 +107,6 @@ struct B : CopyCounter<B> {
 		return lhs.m_i == rhs.m_i && lhs.m_ds == rhs.m_ds;
 	}
 
-private:
 	int m_i{ 0 };
 	std::vector<D> m_ds;
 };
@@ -143,7 +141,6 @@ struct C : CopyCounter<C> {
 		return lhs.m_d == rhs.m_d;
 	}
 
-private:
 	double m_d{ 0 };
 };
 
@@ -188,7 +185,7 @@ struct A : CopyCounter<A> {
 	friend std::ostream& operator<<(std::ostream& stream, const A& a) {
 		return stream << makeTuplePrinter(std::make_tuple(a.m_field, a.m_value, makeRangePrinter(a.m_bs), makeRangePrinter(a.m_cs)));
 	}
-private:
+
 	std::string m_field;
 	std::vector<B> m_bs;
 	std::set<C> m_cs;
@@ -217,18 +214,18 @@ Writer<Res, T, P> writer(Res(T::*fn)(P)) { return Writer<Res, T, P>(fn); }
 // DECLARE DATAMODELS
 template<> struct FieldIndex<A> { enum class type { FIELD = 0, VALUE }; };
 DECLARE_DATAMODEL(A, "A_Table", "REF",
-					createColumn("FIELD", std::mem_fun_ref(&A::getField), writer(&A::setField)),
-					createColumn("VALUE", std::mem_fun_ref(&A::getValue), writer(&A::setValue)));
+				createColumn("FIELD", &A::m_field),
+				createColumn("VALUE", &A::m_value));
 
 DECLARE_ONETOMANY(A,
-					createOneToManyRelation("A_REF", std::mem_fun_ref(&A::getBs), writer(&A::setBs)),
-					createOneToManyRelation("A_REF", std::mem_fun_ref(&A::getCs), writer(&A::setCs)));
+				createOneToManyRelation("A_REF", &A::m_bs),
+				createOneToManyRelation("A_REF", &A::m_cs));
 
-DECLARE_DATAMODEL(B, "B_Table", "REF", createColumn("INT", std::mem_fun_ref(&B::getI), writer(&B::setI)));
+DECLARE_DATAMODEL(B, "B_Table", "REF", createColumn("INT", &B::m_i));
 
-DECLARE_ONETOMANY(B, createOneToManyRelation("B_REF", std::mem_fun_ref(&B::getDs), writer(&B::setDs)));
+DECLARE_ONETOMANY(B, createOneToManyRelation("B_REF", &B::m_ds));
 
-DECLARE_DATAMODEL(C, "C_Table", "REF", createColumn("DBL", std::mem_fun_ref(&C::getD), writer(&C::setD)));
+DECLARE_DATAMODEL(C, "C_Table", "REF", createColumn("DBL", &C::m_d));
 
-DECLARE_DATAMODEL(D, "D_Table", "REF", createColumn("STR", std::mem_fun_ref(&D::getS), writer(&D::setS)));
+DECLARE_DATAMODEL(D, "D_Table", "REF", createColumn("STR", &D::m_s));
 
