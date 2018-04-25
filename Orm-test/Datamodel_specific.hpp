@@ -213,13 +213,9 @@ Writer<Res, T, P> writer(Res(T::*fn)(P)) { return Writer<Res, T, P>(fn); }
 
 // DECLARE DATAMODELS
 template<> struct FieldIndex<A> { enum class type { FIELD = 0, VALUE }; };
-DECLARE_DATAMODEL(A, "A_Table", "REF",
-				createColumn("FIELD", &A::m_field),
-				createColumn("VALUE", &A::m_value));
+DECLARE_DATAMODEL(A, "A_Table", "REF", createColumn("FIELD", &A::m_field), createColumn("VALUE", &A::m_value));
 
-DECLARE_ONETOMANY(A,
-				createOneToManyRelation("A_REF", &A::m_bs),
-				createOneToManyRelation("A_REF", &A::m_cs));
+DECLARE_ONETOMANY(A, createOneToManyRelation("A_REF", &A::m_bs), createOneToManyRelation("A_REF", &A::m_cs));
 
 DECLARE_DATAMODEL(B, "B_Table", "REF", createColumn("INT", &B::m_i));
 
