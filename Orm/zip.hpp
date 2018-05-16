@@ -18,7 +18,7 @@ struct zip_iterator : public std::iterator<std::input_iterator_tag, std::pair<ty
 		return lhs.m_it1 == rhs.m_it1;
 	}
 
-	auto operator*() const {
+	value_type operator*() const {
 		return std::make_pair(*m_it1, *m_it2);
 	}
 };
@@ -29,6 +29,7 @@ zip_iterator<It1, It2> make_zip_iterator(It1 it1, It2 it2) {
 }
 
 template<class Range1, class Range2>
-auto zip(const Range1& range1, const Range2& range2) {
+auto zip(const Range1& range1, const Range2& range2) -> decltype(make_range(make_zip_iterator(range1.begin(), range2.begin()), make_zip_iterator(range1.end(), range2.end())))
+{
 	return make_range(make_zip_iterator(range1.begin(), range2.begin()), make_zip_iterator(range1.end(), range2.end()));
 }

@@ -2,26 +2,26 @@
 
 #include <ostream>
 #include <type_traits>
+#include "TypedIndex.hpp"
 
 template<class Tuple>
 struct TuplePrinter {
 	const Tuple& m_tuple;
 	TuplePrinter(const Tuple& tuple) : m_tuple(tuple) {}
 
-	template<size_t... Is>
-	static void print(std::ostream&, const Tuple&, std::index_sequence<Is...>) {}
+	static void print(std::ostream&, const Tuple&, TypedIndex<std::tuple_size<Tuple>::value>) {}
 
-	template<size_t I, size_t... Is>
-	static void print(std::ostream& stream, const Tuple& t, std::index_sequence<I, Is...>) {
+	template<size_t I>
+	static void print(std::ostream& stream, const Tuple& t, TypedIndex<I>) {
 		stream << std::get<I>(t);
-		if (I != std::tuple_size_v<Tuple> -1)
+		if (I != std::tuple_size<Tuple>::value -1)
 			stream << ',';
 
-		print(stream, t, std::index_sequence<Is...>());
+		print(stream, t, TypedIndex<I+1>());
 	}
 	friend std::ostream& operator<<(std::ostream& stream, const TuplePrinter& t) {
 		stream << '{';
-		print(stream, t.m_tuple, std::make_index_sequence<std::tuple_size_v<Tuple>>());
+		print(stream, t.m_tuple, TypedIndex<0>());
 		return stream << '}';
 	}
 };

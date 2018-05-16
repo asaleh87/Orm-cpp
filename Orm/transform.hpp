@@ -12,7 +12,7 @@ struct transform_iterator : public std::iterator<std::input_iterator_tag, std::r
 	It m_it;
 	Fn m_fn;
 	transform_iterator(It it, Fn fn) : m_it(it), m_fn(fn) {}
-	auto operator*() const { return m_fn(*m_it); }
+	value_type operator*() const { return m_fn(*m_it); }
 
 	transform_iterator& operator++() {
 		++m_it;
@@ -29,12 +29,12 @@ struct transform_iterator : public std::iterator<std::input_iterator_tag, std::r
 };
 
 template<class It, class Fn>
-auto make_transform_iterator(It it, Fn fn) {
+transform_iterator<It, Fn> make_transform_iterator(It it, Fn fn) {
 	return transform_iterator<It, Fn>(it, fn);
 }
 
 template<class It, class Fn>
-auto make_update_transform_iterator(It it, Fn fn) {
+transform_iterator<It, Fn, true> make_update_transform_iterator(It it, Fn fn) {
 	return transform_iterator<It, Fn, true>(it, fn);
 }
 
@@ -45,21 +45,23 @@ struct transform_wrapper {
 };
 
 template<class Fn>
-auto make_transform(Fn fn) {
+transform_wrapper<Fn> make_transform(Fn fn) {
 	return transform_wrapper<Fn>(fn);
 }
 template<class Fn>
-auto make_update_transform(Fn fn) {
+transform_wrapper<Fn, true> make_update_transform(Fn fn) {
 	return transform_wrapper<Fn, true>(fn);
 }
 template<class Range, class Fn>
-auto operator|(const Range& range, transform_wrapper<Fn> transformer) {
+auto operator|(const Range& range, transform_wrapper<Fn> transformer) -> decltype(make_range(make_transform_iterator(range.begin(), transformer.m_fn), make_transform_iterator(range.end(), transformer.m_fn)))
+{
 	return make_range(make_transform_iterator(range.begin(), transformer.m_fn),
 					  make_transform_iterator(range.end(), transformer.m_fn));
 }
 
 template<class Range, class Fn>
-auto operator|(Range& range, transform_wrapper<Fn, true> transformer) {
+auto operator|(Range& range, transform_wrapper<Fn, true> transformer) -> decltype(make_range(make_update_transform_iterator(range.begin(), transformer.m_fn), make_update_transform_iterator(range.end(), transformer.m_fn)))
+{
 	return make_range(make_update_transform_iterator(range.begin(), transformer.m_fn),
 				      make_update_transform_iterator(range.end(), transformer.m_fn));
 }

@@ -26,9 +26,10 @@ template<class Orm, class Tuple>
 using columns_to_criterias_t = typename columns_to_criterias<Orm, Tuple>::type;
 
 template<class Orm, class Tuple, size_t... Is>
-auto initialize_impl(const Tuple& tuple, std::index_sequence<Is...>) {
+auto initialize_impl(const Tuple& tuple, util::index_sequence<Is...>) -> decltype(std::make_tuple(std::make_pair(std::get<Is>(tuple), typename std::tuple_element<Is, columns_to_criterias_t<Orm, Tuple>>::type::second_type())...))
+{
 	using result_type = columns_to_criterias_t<Orm, Tuple>;
-	return std::make_tuple(std::make_pair(std::get<Is>(tuple), typename std::tuple_element_t<Is, result_type>::second_type())...);
+	return std::make_tuple(std::make_pair(std::get<Is>(tuple), typename std::tuple_element<Is, result_type>::type::second_type())...);
 }
 
 template<class Orm, class Id = unsigned long>
@@ -36,7 +37,7 @@ struct Query {
 	using fieldType = typename Datamodel<Orm>::fields;
 	using criterias = typename columns_to_criterias < Orm, decltype(Datamodel<Orm>::columns())>::type;
 
-	Query() : m_criterias(initializeEmptyCriterias()) {}
+	Query() : m_criterias(initialize_impl<Orm>(Datamodel<Orm>::columns(), util::make_index_sequence<std::tuple_size<decltype(Datamodel<Orm>::columns())>::value>())) {}
 
 	template<fieldType field, class Range>
 	Query& withCriteria(const Range& range) {
@@ -50,10 +51,11 @@ struct Query {
 		return *this;
 	}
 	template<fieldType field>
-	const auto& getCriterias() const {
+	auto getCriterias() const -> decltype(std::get<static_cast<int>(field)>(m_criterias).second)
+	{
 		return std::get<static_cast<int>(field)>(m_criterias).second;
 	}
-	const auto& getIds() const {
+	const std::vector<Id>& getIds() const {
 		return m_queryByIds;
 	}
 	template<fieldType field>
@@ -65,14 +67,11 @@ struct Query {
 private:
 	std::vector<Id> m_queryByIds;
 	criterias m_criterias;
-	auto initializeEmptyCriterias() {
-		return initialize_impl<Orm>(Datamodel<Orm>::columns(), std::make_index_sequence<std::tuple_size<decltype(Datamodel<Orm>::columns())>::value>());
-	}
 };
 
 
 template<class RefToFather, class Range>
-auto makeFatherIdQuery(const Range& range) {
+Query<RefToFather> makeFatherIdQuery(const Range& range) {
 	Query<RefToFather> query;
 	static const int father_ref_index = Datamodel<RefToFather>::father_ref_index;
 	query.withCriteria<father_ref_index>(range);

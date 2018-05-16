@@ -11,7 +11,7 @@ struct FieldIndex { using type = size_t; };
 #define DECLARE_DATAMODEL(Type, Table, REFCOLUMN, ...)\
 template<>\
 struct Datamodel<Type> {\
-	using fields = typename FieldIndex<Type>::type;																	   \
+	using fields = FieldIndex<Type>::type;																	   \
 	static const std::string ref_label() { return Table; }															   \
 	static const std::string table_name() { return REFCOLUMN; }														   \
 	static auto columns() -> decltype(std::make_tuple(__VA_ARGS__)) \
@@ -36,7 +36,8 @@ Column<Accessor, Writer> createColumn(std::string fieldName, Accessor accessor, 
 }
 
 template<class T, class FieldType>
-auto createColumn(std::string fieldName, FieldType T::* field) {
+auto createColumn(std::string fieldName, FieldType T::* field) -> decltype(createColumn(fieldName, makeFieldAccessor(field), makeFieldAccessor(field)))
+{
 	auto accessor = makeFieldAccessor(field);
 	return createColumn(fieldName, accessor, accessor);
 }

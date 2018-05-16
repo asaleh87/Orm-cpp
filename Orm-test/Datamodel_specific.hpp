@@ -22,24 +22,23 @@ struct RangePrinter {
 };
 
 template<class Range>
-auto makeRangePrinter(const Range& range) {
+RangePrinter<Range> makeRangePrinter(const Range& range) {
 	return RangePrinter<Range>(range);
 }
-
 
 template<class Impl>
 struct CopyCounter {
 	static int m_copy_count;
-	CopyCounter() noexcept {}
-	CopyCounter(const CopyCounter&) noexcept {
+	CopyCounter() /*noexcept*/ {}
+	CopyCounter(const CopyCounter&) /*noexcept */{
 		++m_copy_count;
 	}
-	CopyCounter& operator=(const CopyCounter&) noexcept {
+	CopyCounter& operator=(const CopyCounter&) /*noexcept */{
 		++m_copy_count;
 		return *this;
 	}
-	CopyCounter(CopyCounter&&) noexcept {}
-	CopyCounter& operator=(CopyCounter&&) noexcept { return *this; }
+	CopyCounter(CopyCounter&&) /*noexcept*/ {}
+	CopyCounter& operator=(CopyCounter&&) /*noexcept*/ { return *this; }
 };
 
 struct D : CopyCounter<D> {
@@ -48,16 +47,16 @@ struct D : CopyCounter<D> {
 		static_cast<CopyCounter<D>&>(*this) = std::forward<That>(that);
 		m_s = that.m_s;
 	}
-	D& operator=(D&& that) noexcept {
+	D& operator=(D&& that) /*noexcept*/ {
 		init(std::move(that));
 		return *this;
 	}
-	D& operator=(const D& that) noexcept {
+	D& operator=(const D& that) /*noexcept */{
 		init(that);
 		return *this;
 	}
-	D(D&& that) noexcept { init(std::move(that)); }
-	D(const D& that) noexcept { init(that); }
+	D(D&& that) /*noexcept*/ { init(std::move(that)); }
+	D(const D& that) /*noexcept*/ { init(that); }
 
 	D() {}
 	const std::string& getS() const { return m_s; }
@@ -85,16 +84,16 @@ struct B : CopyCounter<B> {
 		m_i = that.m_i;
 		m_ds = std::move(that.m_ds);
 	}
-	B& operator=(B&& that) noexcept {
+	B& operator=(B&& that) /*noexcept*/ {
 		init(std::move(that));
 		return *this;
 	}
-	B& operator=(const B& that) noexcept {
+	B& operator=(const B& that) /*noexcept*/ {
 		init(that);
 		return *this;
 	}
-	B(B&& that) noexcept { init(std::move(that)); }
-	B(const B& that) noexcept { init(that); }
+	B(B&& that) /*noexcept*/ { init(std::move(that)); }
+	B(const B& that) /*noexcept*/ { init(that); }
 
 	friend std::ostream& operator<<(std::ostream& stream, const B& b) {
 		return stream << makeTuplePrinter(std::make_tuple(b.m_i, makeRangePrinter(b.m_ds)));
@@ -121,16 +120,16 @@ struct C : CopyCounter<C> {
 		static_cast<CopyCounter<C>&>(*this) = std::forward<That>(that);
 		m_d = that.m_d;
 	}
-	C& operator=(C&& that) noexcept {
+	C& operator=(C&& that) /*noexcept*/ {
 		init(std::move(that));
 		return *this;
 	}
-	C& operator=(const C& that) noexcept {
+	C& operator=(const C& that) /*noexcept*/ {
 		init(that);
 		return *this;
 	}
-	C(C&& that) noexcept { init(std::move(that)); }
-	C(const C& that) noexcept { init(that); }
+	C(C&& that) /*noexcept*/ { init(std::move(that)); }
+	C(const C& that) /*noexcept*/ { init(that); }
 
 	C() {}
 	friend bool operator<(const C& lhs, const C& rhs) { return lhs.m_d < rhs.m_d; }
@@ -156,13 +155,13 @@ struct A : CopyCounter<A> {
 
 	static int m_copy_count;
 	A(const A& that) { init(that); }
-	A(A&& that) noexcept { init(std::move(that)); }
+	A(A&& that) /*noexcept*/ { init(std::move(that)); }
 
-	A& operator=(const A& that) noexcept { 
+	A& operator=(const A& that) /*noexcept*/ { 
 		init(that);
 		return *this;
 	}
-	A& operator=(A&& that) noexcept {
+	A& operator=(A&& that) /*noexcept*/ {
 		init(std::move(that));
 		return *this;
 	}
@@ -198,28 +197,11 @@ struct A : CopyCounter<A> {
 	}
 };
 
-//re-implement std::mem_fun_ref for setters to propagate move of parameter
-template<class Res, class T, class P>
-struct Writer {
-	Res(T::*m_fn)(P);
-	explicit Writer(Res(T::*fn)(P)) : m_fn(fn) {}
-	Res operator()(T& t, P arg) const {
-		return (t.*m_fn)(std::move(arg));
-	}
-};
-
-template<class Res, class T, class P>
-Writer<Res, T, P> writer(Res(T::*fn)(P)) { return Writer<Res, T, P>(fn); }
-
 // DECLARE DATAMODELS
 template<> struct FieldIndex<A> { enum class type { FIELD = 0, VALUE }; };
-DECLARE_DATAMODEL(A, "A_Table", "REF",
-				createColumn("FIELD", &A::m_field),
-				createColumn("VALUE", &A::m_value));
+DECLARE_DATAMODEL(A, "A_Table", "REF", createColumn("FIELD", &A::m_field), createColumn("VALUE", &A::m_value));
 
-DECLARE_ONETOMANY(A,
-				createOneToManyRelation("A_REF", &A::m_bs),
-				createOneToManyRelation("A_REF", &A::m_cs));
+DECLARE_ONETOMANY(A, createOneToManyRelation("A_REF", &A::m_bs), createOneToManyRelation("A_REF", &A::m_cs));
 
 DECLARE_DATAMODEL(B, "B_Table", "REF", createColumn("INT", &B::m_i));
 

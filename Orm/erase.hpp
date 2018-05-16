@@ -3,7 +3,7 @@
 #include "OneToMany.hpp"
 #include "Query.hpp"
 #include "OrmWithRefToFather.hpp"
-
+#include "TypedIndex.hpp"
 
 template<class Orm, class Relation, class Range, class DBHandler>
 bool eraseChild(const Relation& relation, Range& father_ids, DBHandler handler)
@@ -16,21 +16,20 @@ bool eraseChild(const Relation& relation, Range& father_ids, DBHandler handler)
 	return erase(makeFatherIdQuery<child_type_with_father_ref>(father_ids), handler);
 }
 
-template<size_t I, class Orm, class Range, class DBHandler, class... Relations>
-std::enable_if_t<I == sizeof...(Relations), bool>
-	erase_children_impl(const std::tuple<Relations...>&, const Range&, DBHandler) { return true; }
 
-template<size_t I, class Orm, class Range, class DBHandler, class... Relations>
-std::enable_if_t < I < sizeof...(Relations), bool>
-	erase_children_impl(const std::tuple<Relations...>& relations, const Range& father_ids, DBHandler stream)
+template<class Orm, class Range, class DBHandler, class... Relations>
+bool erase_children_impl(const std::tuple<Relations...>&, const Range&, DBHandler, TypedIndex<sizeof...(Relations)>) { return true; }
+
+template<class Orm, size_t I, class Range, class DBHandler, class... Relations>
+bool erase_children_impl(const std::tuple<Relations...>& relations, const Range& father_ids, DBHandler stream, TypedIndex<I>)
 {
 	if (eraseChild<Orm>(std::get<I>(relations), father_ids, stream))
-		return erase_children_impl<I + 1, Orm>(relations, father_ids, stream);
+		return erase_children_impl<Orm>(relations, father_ids, stream, TypedIndex<I+1>());
 	
 	return false;
 }
 
 template<class Orm, class DBHandler >
 bool erase(const Query<Orm>& query, DBHandler handler) {
-	return erase_children_impl<0, orm_undl_type_t<Orm>>(OneToMany<orm_undl_type_t<Orm>>::relations(), handler(query), handler);
+	return erase_children_impl<orm_undl_type_t<Orm>>(OneToMany<orm_undl_type_t<Orm>>::relations(), handler(query), handler, TypedIndex<0>());
 }

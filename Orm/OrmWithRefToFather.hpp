@@ -3,6 +3,7 @@
 #include <tuple>
 #include <type_traits>
 #include "DataModel.hpp"
+#include "index_sequence.hpp"
 
 template<class Father, class Orm, class Id = unsigned long>
 struct OrmWithRefToFather {
@@ -53,7 +54,7 @@ template<class T>
 using orm_undl_type_t = typename orm_undl_type<T>::type;
 
 template<class Father, class Child, class Id>
-auto make_orm_with_ref_to_father(Child& child, Id id, const Father&)
+OrmWithRefToFather<Father, Child&, Id> make_orm_with_ref_to_father(Child& child, Id id, const Father&)
 {
 	return OrmWithRefToFather<Father, Child&, Id>(child, id);
 }
@@ -70,9 +71,16 @@ E& extractRealType(const OrmWithRefToFather<Father, E&, Id>& e) { return e.m_orm
 template<class E, class Father, class Id>
 const E& extractRealType(const OrmWithRefToFather<Father, E, Id>& e) { return e.m_orm; }
 
+template<class V>
+auto extractType(const V& v) -> decltype(std::cref(extractRealType(v))) 
+{
+	return std::cref(extractRealType(v)); 
+}
+
 template<class Range>
-auto make_cref(const Range& range) {
-	return range | make_transform([](const auto& e) { return std::cref(extractRealType(e)); });
+auto make_cref(const Range& range) -> decltype(range | make_transform(extractType<typename Range::value_type>))
+{
+	return range | make_transform(extractType<typename Range::value_type>);
 }
 template<int I, class Father, class Tuple>
 struct GetResultOf {
@@ -81,14 +89,14 @@ struct GetResultOf {
 	using type = typename container_type::value_type;
 };
 template<int I, class Child, class Father, class Tuple>
-constexpr typename std::enable_if<std::is_same<Child, typename GetResultOf<I, Father, Tuple>::type>::value, const std::string&>::type
+/*constexpr */typename std::enable_if<std::is_same<Child, typename GetResultOf<I, Father, Tuple>::type>::value, const std::string&>::type
 getRefColName_internal(const Tuple& tuple)
 {
 	return std::get<I>(tuple).m_refColumn;
 }
 
 template<int I, class Child, class Father, class Tuple>
-constexpr typename std::enable_if<!std::is_same<Child, typename GetResultOf<I, Father, Tuple>::type>::value, const std::string&>::type
+/*constexpr */typename std::enable_if<!std::is_same<Child, typename GetResultOf<I, Father, Tuple>::type>::value, const std::string&>::type
 getRefColName_internal(const Tuple& tuple)
 {
 	return getRefColName_internal<I + 1, Child, Father>(tuple);
@@ -116,25 +124,34 @@ struct Datamodel<OrmWithRefToFather<Father, Child, Id>> : Datamodel<Child>
 			m_fn(orm.m_orm, std::forward<Field>(field));
 		}
 
-		auto operator()(const Orm_t& orm) const {
+		auto operator()(const Orm_t& orm) const -> decltype(m_fn(orm.m_orm))
+		{
 			return m_fn(orm.m_orm);
 		}
 	};
 	template<class Fn>
-	static auto makeIndirectAccessor(Fn fn) {
+	static IndirectAccessor<Fn> makeIndirectAccessor(Fn fn) {
 		return IndirectAccessor<Fn>(fn);
 	}
 	template<class Tuple, size_t... Is>
-	static auto wrap_impl(Tuple&& tuple, std::index_sequence<Is...>) {
+	static auto wrap_impl(Tuple&& tuple, util::index_sequence<Is...>) -> decltype(
+		std::make_tuple(
+			createColumn(std::get<Is>(std::forward<Tuple>(tuple)).m_name,
+				makeIndirectAccessor(std::get<Is>(std::forward<Tuple>(tuple)).m_accessor),
+				makeIndirectAccessor(std::get<Is>(std::forward<Tuple>(tuple)).m_writer))...))
+	{
 		return std::make_tuple(
 			createColumn(std::get<Is>(std::forward<Tuple>(tuple)).m_name, 
 				makeIndirectAccessor(std::get<Is>(std::forward<Tuple>(tuple)).m_accessor),
 				makeIndirectAccessor(std::get<Is>(std::forward<Tuple>(tuple)).m_writer))...);
 	}
-	static auto wrapWithAccessorToRealClass() {
-		return wrap_impl(Datamodel<RealChild>::columns(), std::make_index_sequence<std::tuple_size<decltype(Datamodel<RealChild>::columns())>::value>());
+	static auto wrapWithAccessorToRealClass() -> decltype(wrap_impl(Datamodel<RealChild>::columns(), util::make_index_sequence<std::tuple_size<decltype(Datamodel<RealChild>::columns())>::value>()))
+	{
+		return wrap_impl(Datamodel<RealChild>::columns(), util::make_index_sequence<std::tuple_size<decltype(Datamodel<RealChild>::columns())>::value>());
 	}
-	static constexpr auto columns() {
+	static /*constexpr*/ auto columns() -> decltype(std::tuple_cat(wrapWithAccessorToRealClass(),
+		std::make_tuple(createColumn(getRefColName<Father, RealChild>(), std::mem_fun_ref(&Orm_t::get_ref_to_father), std::mem_fun_ref(&Orm_t::set_ref_to_father)))))
+	{
 		return std::tuple_cat(wrapWithAccessorToRealClass(),
 			std::make_tuple(createColumn(getRefColName<Father, RealChild>(), std::mem_fun_ref(&Orm_t::get_ref_to_father), std::mem_fun_ref(&Orm_t::set_ref_to_father))));
 	}
