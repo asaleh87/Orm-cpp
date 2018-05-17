@@ -42,18 +42,27 @@ typename std::enable_if < I < sizeof...(Relations), void>::type
 }
 
 template<class Orm, class DBHandler>
-std::vector<Orm> loadElements(const Query<Orm>& query, DBHandler handler) {
+auto loadElementsWithIds(const Query<Orm>& query, DBHandler handler)
+{
 	auto range_with_ids = handler(query);//get ids of mapped to partially constructed objects based only on columns and not on one2many
 	std::sort(range_with_ids.begin(), range_with_ids.end(), [](const auto& lhs, const auto& rhs) {return lhs.first < rhs.first; });
-	
+
 	using Id = typename decltype(range_with_ids)::value_type::first_type;
 	using undltype = std::remove_reference_t<decltype(extractRealType(range_with_ids.begin()->second))>;
-	
+
 	std::vector<std::pair<Id, std::reference_wrapper<undltype>>> refs_with_ids;
 	std::transform(range_with_ids.begin(), range_with_ids.end(), std::back_inserter(refs_with_ids), [](std::pair<Id, Orm>& p) { return std::make_pair(p.first, std::ref(extractRealType(p.second))); });
 
 	loadChildren_impl<0, undltype>(OneToMany<undltype>::relations(), refs_with_ids, handler);
-	auto range_without_ids = range_with_ids | make_update_transform([](std::pair<Id, Orm>& p) {
+	return range_with_ids;
+}
+
+template<class Orm, class DBHandler>
+std::vector<Orm> loadElements(const Query<Orm>& query, DBHandler handler) {
+	auto range_with_ids = loadElementsWithIds(query, handler);
+	using value_type = typename decltype(range_with_ids)::value_type;
+
+	auto range_without_ids = range_with_ids | make_update_transform([](value_type& p) {
 		return std::move(p.second);
 	});
 	return std::vector<Orm>(range_without_ids.begin(), range_without_ids.end());	
