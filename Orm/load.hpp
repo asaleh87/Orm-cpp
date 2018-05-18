@@ -43,21 +43,29 @@ void loadChildren_impl(const std::tuple<Relations...>& relations, const Range& f
 }
 
 template<class Orm, class DBHandler>
-std::vector<Orm> loadElements(const Query<Orm>& query, DBHandler handler) {
+auto loadElementsWithIds(const Query<Orm>& query, DBHandler handler) -> decltype(handler(query))
+{
 	auto range_with_ids = handler(query);//get ids of mapped to partially constructed objects based only on columns and not on one2many
 	using range_type = decltype(range_with_ids);
 	using value_type = typename range_type::value_type;
-	std::sort(range_with_ids.begin(), range_with_ids.end(), [](const value_type& lhs, const value_type& rhs) {return lhs.first < rhs.first; });
-	
+	std::sort(range_with_ids.begin(), range_with_ids.end(), [](const auto& lhs, const auto& rhs) {return lhs.first < rhs.first; });
+
 	using Id = typename decltype(range_with_ids)::value_type::first_type;
 	using undltype = std::remove_reference_t<decltype(extractRealType(range_with_ids.begin()->second))>;
-	
+
 	std::vector<std::pair<Id, std::reference_wrapper<undltype>>> refs_with_ids;
 	std::transform(range_with_ids.begin(), range_with_ids.end(), std::back_inserter(refs_with_ids), [](std::pair<Id, Orm>& p) { return std::make_pair(p.first, std::ref(extractRealType(p.second))); });
 
-	auto relations = OneToMany<undltype>::relations();
-	loadChildren_impl<undltype>(relations, refs_with_ids, handler, TypedIndex<0>());
-	auto range_without_ids = range_with_ids | make_update_transform([](std::pair<Id, Orm>& p) {
+	loadChildren_impl<undltype>(OneToMany<undltype>::relations(), refs_with_ids, handler, TypedIndex<0>());
+	return range_with_ids;
+}
+
+template<class Orm, class DBHandler>
+std::vector<Orm> loadElements(const Query<Orm>& query, DBHandler handler) {
+	auto range_with_ids = loadElementsWithIds(query, handler);
+	using value_type = typename decltype(range_with_ids)::value_type;
+
+	auto range_without_ids = range_with_ids | make_update_transform([](value_type& p) {
 		return std::move(p.second);
 	});
 	return std::vector<Orm>(range_without_ids.begin(), range_without_ids.end());	
