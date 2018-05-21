@@ -45,10 +45,10 @@ struct Column : public AbstractColumn<Accessor, Writer, Column<Accessor, Writer>
 		: AbstractColumn<Accessor, Writer, Column>(fieldName, accessor, writer, length) {}
 };
 template<class Accessor, class Writer>
-struct NumberColumn : AbstractColumn<Accessor, Writer, NumberColumn<Accessor, Writer>>
+struct FloatingPointColumn : AbstractColumn<Accessor, Writer, FloatingPointColumn<Accessor, Writer>>
 {
-	explicit NumberColumn(std::string fieldName, Accessor accessor, Writer writer, int length, int nbDecimals)
-		: AbstractColumn<Accessor, Writer, NumberColumn>(fieldName, accessor, writer, length), m_nbDecimals(nbDecimals) {}
+	explicit FloatingPointColumn(std::string fieldName, Accessor accessor, Writer writer, int length, int nbDecimals)
+		: AbstractColumn<Accessor, Writer, FloatingPointColumn>(fieldName, accessor, writer, length), m_nbDecimals(nbDecimals) {}
 
 	int m_nbDecimals;
 };
@@ -65,7 +65,7 @@ auto createColumn(std::string fieldName, FieldType T::* field, int length) {
 
 template<class Accessor, class Writer>
 auto createNumberColumn(std::string fieldName, Accessor accessor, Writer writer, int length, int decimals) {
-	return NumberColumn<Accessor, Writer>(fieldName, accessor, writer, length, decimals);
+	return FloatingPointColumn<Accessor, Writer>(fieldName, accessor, writer, length, decimals);
 }
 template<class T, class FieldType>
 auto createNumberColumn(std::string fieldName, FieldType T::* field, int length, int decimals) {

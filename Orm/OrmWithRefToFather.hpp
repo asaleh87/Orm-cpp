@@ -127,7 +127,7 @@ struct Datamodel<OrmWithRefToFather<Father, Child, Id>> : Datamodel<Child>
 	}
 
 	template<class Accessor, class Writer>
-	static auto createWrapperColumn(NumberColumn<Accessor, Writer> col) {
+	static auto createWrapperColumn(FloatingPointColumn<Accessor, Writer> col) {
 		return createNumberColumn(col.m_name, makeIndirectAccessor(col.m_accessor), makeIndirectAccessor(col.m_writer), col.m_length, col.m_nbDecimals);
 	}
 
