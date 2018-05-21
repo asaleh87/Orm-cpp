@@ -13,10 +13,6 @@ struct OrmWithRefToFather {
 
 	OrmWithRefToFather() {}
 
-	Id get_ref_to_father() const { return m_ref_to_father; }
-	
-	void set_ref_to_father(Id id) { m_ref_to_father = id; }
-	
 	friend std::ostream& operator<<(std::ostream& stream, const OrmWithRefToFather& o) {
 		return stream << o.m_ref_to_father << ',' << o.m_orm;
 	}
@@ -129,14 +125,15 @@ struct Datamodel<OrmWithRefToFather<Father, Child, Id>> : Datamodel<Child>
 		return std::make_tuple(
 			createColumn(std::get<Is>(std::forward<Tuple>(tuple)).m_name, 
 				makeIndirectAccessor(std::get<Is>(std::forward<Tuple>(tuple)).m_accessor),
-				makeIndirectAccessor(std::get<Is>(std::forward<Tuple>(tuple)).m_writer))...);
+				makeIndirectAccessor(std::get<Is>(std::forward<Tuple>(tuple)).m_writer), 
+				std::get<Is>(std::forward<Tuple>(tuple)).m_length)...);
 	}
 	static auto wrapWithAccessorToRealClass() {
 		return wrap_impl(Datamodel<RealChild>::columns(), std::make_index_sequence<std::tuple_size<decltype(Datamodel<RealChild>::columns())>::value>());
 	}
 	static constexpr auto columns() {
 		return std::tuple_cat(wrapWithAccessorToRealClass(),
-			std::make_tuple(createColumn(getRefColName<Father, RealChild>(), std::mem_fun_ref(&Orm_t::get_ref_to_father), std::mem_fun_ref(&Orm_t::set_ref_to_father))));
+			std::make_tuple(createColumn(getRefColName<Father, RealChild>(), &Orm_t::m_ref_to_father, Datamodel<Father>::ref_col_size)));
 	}
 	static const int father_ref_index = std::tuple_size<decltype(columns())>::value - 1;
 };

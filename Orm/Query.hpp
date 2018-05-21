@@ -8,9 +8,9 @@
 template<class Column, class Orm>
 struct CriteriaByColumn {};
 	
-template<class Accessor, class Writer, class Orm>
-struct CriteriaByColumn<Orm, Column<Accessor, Writer>> {
-	using type = std::pair<Column<Accessor, Writer>, std::vector<std::decay_t<std::result_of_t<Accessor(Orm)>>>>;
+template<class Accessor, class Writer, class Orm, template<class, class> class Col>
+struct CriteriaByColumn<Orm, Col<Accessor, Writer>> {
+	using type = std::pair<Col<Accessor, Writer>, std::vector<std::decay_t<std::result_of_t<Accessor(Orm)>>>>;
 };
 
 template<class Orm, class Tuple>
