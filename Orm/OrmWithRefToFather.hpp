@@ -120,13 +120,20 @@ struct Datamodel<OrmWithRefToFather<Father, Child, Id>> : Datamodel<Child>
 	static auto makeIndirectAccessor(Fn fn) {
 		return IndirectAccessor<Fn>(fn);
 	}
+
+	template<class Accessor, class Writer>
+	static auto createWrapperColumn(Column<Accessor, Writer> col) {
+		return createColumn(col.m_name, makeIndirectAccessor(col.m_accessor), makeIndirectAccessor(col.m_writer), col.m_length);
+	}
+
+	template<class Accessor, class Writer>
+	static auto createWrapperColumn(NumberColumn<Accessor, Writer> col) {
+		return createNumberColumn(col.m_name, makeIndirectAccessor(col.m_accessor), makeIndirectAccessor(col.m_writer), col.m_length, col.m_nbDecimals);
+	}
+
 	template<class Tuple, size_t... Is>
 	static auto wrap_impl(Tuple&& tuple, std::index_sequence<Is...>) {
-		return std::make_tuple(
-			createColumn(std::get<Is>(std::forward<Tuple>(tuple)).m_name, 
-				makeIndirectAccessor(std::get<Is>(std::forward<Tuple>(tuple)).m_accessor),
-				makeIndirectAccessor(std::get<Is>(std::forward<Tuple>(tuple)).m_writer), 
-				std::get<Is>(std::forward<Tuple>(tuple)).m_length)...);
+		return std::make_tuple(createWrapperColumn(std::get<Is>(std::forward<Tuple>(tuple)))...);
 	}
 	static auto wrapWithAccessorToRealClass() {
 		return wrap_impl(Datamodel<RealChild>::columns(), std::make_index_sequence<std::tuple_size<decltype(Datamodel<RealChild>::columns())>::value>());

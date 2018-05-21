@@ -63,11 +63,15 @@ auto createColumn(std::string fieldName, FieldType T::* field, int length) {
 	return createColumn(fieldName, accessor, accessor, length);
 }
 
+template<class Accessor, class Writer>
+auto createNumberColumn(std::string fieldName, Accessor accessor, Writer writer, int length, int decimals) {
+	return NumberColumn<Accessor, Writer>(fieldName, accessor, writer, length, decimals);
+}
 template<class T, class FieldType>
 auto createNumberColumn(std::string fieldName, FieldType T::* field, int length, int decimals) {
 	static_assert(std::is_floating_point_v<FieldType>, "use createColumn for non-floating fields");
 	auto accessor = makeFieldAccessor(field);
-	return NumberColumn<decltype(accessor), decltype(accessor)>(fieldName, accessor, accessor, length, decimals);
+	return createNumberColumn(fieldName, accessor, accessor, length, decimals);
 }
 
 
