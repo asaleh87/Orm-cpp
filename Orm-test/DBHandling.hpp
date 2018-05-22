@@ -79,7 +79,6 @@ std::vector<std::pair<unsigned long, std::tuple<double, unsigned long>>> get_tab
 }
 
 
-
 template<class Orm>
 struct Table {
 	using tuples = std::vector <std::pair<unsigned long, typename std::result_of<ToTuple(Orm)>::type>>;

@@ -14,10 +14,6 @@ struct OrmWithRefToFather {
 
 	OrmWithRefToFather() {}
 
-	Id get_ref_to_father() const { return m_ref_to_father; }
-	
-	void set_ref_to_father(Id id) { m_ref_to_father = id; }
-	
 	friend std::ostream& operator<<(std::ostream& stream, const OrmWithRefToFather& o) {
 		return stream << o.m_ref_to_father << ',' << o.m_orm;
 	}
@@ -133,27 +129,38 @@ struct Datamodel<OrmWithRefToFather<Father, Child, Id>> : Datamodel<Child>
 	static IndirectAccessor<Fn> makeIndirectAccessor(Fn fn) {
 		return IndirectAccessor<Fn>(fn);
 	}
-	template<class Tuple, size_t... Is>
-	static auto wrap_impl(Tuple&& tuple, util::index_sequence<Is...>) -> decltype(
-		std::make_tuple(
-			createColumn(std::get<Is>(std::forward<Tuple>(tuple)).m_name,
-				makeIndirectAccessor(std::get<Is>(std::forward<Tuple>(tuple)).m_accessor),
-				makeIndirectAccessor(std::get<Is>(std::forward<Tuple>(tuple)).m_writer))...))
+
+	template<class Accessor, class Writer, template<class, class> class Col>
+	static auto createWrapperColumn(const Col<Accessor, Writer>& col) 
+		-> decltype(createColumn(col.m_name, makeIndirectAccessor(col.m_accessor), makeIndirectAccessor(col.m_writer), col.m_length)) 
 	{
-		return std::make_tuple(
-			createColumn(std::get<Is>(std::forward<Tuple>(tuple)).m_name, 
-				makeIndirectAccessor(std::get<Is>(std::forward<Tuple>(tuple)).m_accessor),
-				makeIndirectAccessor(std::get<Is>(std::forward<Tuple>(tuple)).m_writer))...);
+		return createColumn(col.m_name, makeIndirectAccessor(col.m_accessor), makeIndirectAccessor(col.m_writer), col.m_length);
 	}
+
+	template<class Accessor, class Writer>
+	static auto createWrapperColumn(const FloatingPointColumn<Accessor, Writer>& col) 
+		-> decltype(createNumberColumn(col.m_name, makeIndirectAccessor(col.m_accessor), makeIndirectAccessor(col.m_writer), col.m_length, col.m_nbDecimals))
+	{
+		return createNumberColumn(col.m_name, makeIndirectAccessor(col.m_accessor), makeIndirectAccessor(col.m_writer), col.m_length, col.m_nbDecimals);
+	}
+
+	template<class Tuple, size_t... Is>
+	static auto wrap_impl(const Tuple& tuple, util::index_sequence<Is...>) 
+		-> decltype(std::make_tuple(createWrapperColumn(std::get<Is>(tuple))...))
+	{
+		return std::make_tuple(createWrapperColumn(std::get<Is>(tuple))...);
+	}
+	
 	static auto wrapWithAccessorToRealClass() -> decltype(wrap_impl(Datamodel<RealChild>::columns(), util::make_index_sequence<std::tuple_size<decltype(Datamodel<RealChild>::columns())>::value>()))
 	{
 		return wrap_impl(Datamodel<RealChild>::columns(), util::make_index_sequence<std::tuple_size<decltype(Datamodel<RealChild>::columns())>::value>());
 	}
+
 	static /*constexpr*/ auto columns() -> decltype(std::tuple_cat(wrapWithAccessorToRealClass(),
-		std::make_tuple(createColumn(getRefColName<Father, RealChild>(), std::mem_fun_ref(&Orm_t::get_ref_to_father), std::mem_fun_ref(&Orm_t::set_ref_to_father)))))
+		std::make_tuple(createColumn(getRefColName<Father, RealChild>(), &Orm_t::m_ref_to_father, Datamodel<Father>::ref_col_size))))
 	{
 		return std::tuple_cat(wrapWithAccessorToRealClass(),
-			std::make_tuple(createColumn(getRefColName<Father, RealChild>(), std::mem_fun_ref(&Orm_t::get_ref_to_father), std::mem_fun_ref(&Orm_t::set_ref_to_father))));
+			std::make_tuple(createColumn(getRefColName<Father, RealChild>(), &Orm_t::m_ref_to_father, Datamodel<Father>::ref_col_size)));
 	}
 	static const int father_ref_index = std::tuple_size<decltype(columns())>::value - 1;
 };

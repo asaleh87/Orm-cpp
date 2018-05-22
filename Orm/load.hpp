@@ -48,7 +48,7 @@ auto loadElementsWithIds(const Query<Orm>& query, DBHandler handler) -> decltype
 	auto range_with_ids = handler(query);//get ids of mapped to partially constructed objects based only on columns and not on one2many
 	using range_type = decltype(range_with_ids);
 	using value_type = typename range_type::value_type;
-	std::sort(range_with_ids.begin(), range_with_ids.end(), [](const auto& lhs, const auto& rhs) {return lhs.first < rhs.first; });
+	std::sort(range_with_ids.begin(), range_with_ids.end(), [](const value_type& lhs, const value_type& rhs) {return lhs.first < rhs.first; });
 
 	using Id = typename decltype(range_with_ids)::value_type::first_type;
 	using undltype = std::remove_reference_t<decltype(extractRealType(range_with_ids.begin()->second))>;
